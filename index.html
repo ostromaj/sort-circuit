@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sort Circuit</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E⚡%3C/text%3E%3C/svg%3E">
-<meta name="description" content="Pick up the blocks and run the algorithm yourself. An IB Computer Science B2.4 algorithms game with SL and HL modes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E🗿%3C/text%3E%3C/svg%3E">
+<meta name="description" content="A 3D temple where the walls close in unless you run the algorithm right. IB Computer Science B2.4 algorithms with SL and HL modes.">
 <script>
 // Firebase settings for the class leaderboard (same project as Packet Thief, Neuron Nursery and Choo-Choo Queue; web config keys are public by design, access is controlled by the database rules)
 window.FIREBASE_CONFIG = {
@@ -20,133 +20,108 @@ window.FIREBASE_CONFIG = {
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #081a17; --board: #0e2b25; --board2: #133a32; --line: #1f5a4c; --trace: #b8922c;
-    --ink: #e6fff5; --muted: #8cb9ac; --mint: #3dffb5; --volt: #ffd23f; --hot: #ff5c8a; --cyan: #4de1ff; --purple: #a98bff;
-    --bad: #ff8a4c; --good: #3dffb5;
+    --ink: #f6e9cf; --muted: #c9ae86; --gold: #f0bf4c; --torch: #ff9a3c; --jade: #4fe0a8; --ruby: #ff6b5a; --turq: #52d3e0; --violet: #c49bff;
+    --panel: rgba(22, 13, 6, .86); --line: #6e5130;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body { background: var(--bg); color: var(--ink); font-family: "Rubik", system-ui, sans-serif; overflow-x: hidden;
-    background-image: radial-gradient(circle at 20% 10%, #0f342c 0, transparent 40%), radial-gradient(circle at 85% 90%, #102e3a 0, transparent 45%); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0704; }
+  body { color: var(--ink); font-family: "Rubik", system-ui, sans-serif; }
   button { font-family: inherit; }
+  canvas#gl { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; }
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #hud .pe, #hud button, #hud input, #hud a { pointer-events: auto; }
   .mono { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; }
-  /* top bar */
-  .bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); background: rgba(8,26,23,.7); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(6px); }
-  .logo { font-weight: 800; font-size: 20px; letter-spacing: .04em; margin-right: auto; display: flex; align-items: center; gap: 8px; }
-  .logo .bolt { color: var(--volt); }
-  .chip { border: 1px solid var(--line); background: var(--board); border-radius: 10px; padding: 6px 10px; font-weight: 600; font-size: 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
-  .chip b { color: var(--volt); }
-  .iconbtn { border: 1px solid var(--line); background: var(--board); color: var(--ink); border-radius: 10px; padding: 6px 10px; font-size: 16px; cursor: pointer; }
-  .iconbtn:hover { border-color: var(--mint); }
-  main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 40px; }
-  .btn { border: 0; border-radius: 14px; padding: 13px 22px; font-size: 17px; font-weight: 700; cursor: pointer; color: #062019; background: var(--mint); box-shadow: 0 4px 0 #1a9d70, 0 0 0 0 transparent; transition: transform .08s; }
-  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a9d70; }
-  .btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
-  .btn.volt { background: var(--volt); box-shadow: 0 4px 0 #b38d10; }
-  .btn.hot { background: var(--hot); color: #2a0612; box-shadow: 0 4px 0 #b3315a; }
-  .btn:disabled { opacity: .45; cursor: default; }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .card { background: linear-gradient(180deg, var(--board2), var(--board)); border: 1px solid var(--line); border-radius: 20px; padding: 20px; }
-  .kicker { text-transform: uppercase; letter-spacing: .14em; font-weight: 700; font-size: 12px; color: var(--cyan); }
+  .cinzel { font-family: "Cinzel", Georgia, serif; }
+  .bar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px; padding: 10px 14px; flex-wrap: wrap;
+    background: linear-gradient(180deg, rgba(11,7,4,.92), rgba(11,7,4,.55)); border-bottom: 1px solid rgba(110,81,48,.6); }
+  .logo { font-family: "Cinzel", Georgia, serif; font-weight: 900; font-size: 20px; letter-spacing: .06em; margin-right: auto; color: var(--gold); }
+  .chip { border: 1px solid var(--line); background: rgba(22,13,6,.9); border-radius: 10px; padding: 6px 10px; font-weight: 600; font-size: 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+  .chip b { color: var(--gold); }
+  .iconbtn { border: 1px solid var(--line); background: rgba(22,13,6,.9); color: var(--ink); border-radius: 10px; padding: 6px 10px; font-size: 16px; cursor: pointer; }
+  .iconbtn:hover { border-color: var(--gold); }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; box-shadow: 0 12px 40px rgba(0,0,0,.45); backdrop-filter: blur(4px); }
+  .kicker { text-transform: uppercase; letter-spacing: .16em; font-weight: 700; font-size: 12px; color: var(--turq); }
   h1, h2, h3 { margin: 0; }
-  .sub { color: var(--muted); font-size: 17px; line-height: 1.55; }
+  h2 { font-family: "Cinzel", Georgia, serif; font-weight: 900; letter-spacing: .02em; }
+  .sub { color: var(--muted); font-size: 16px; line-height: 1.55; }
   .note { color: var(--muted); font-size: 14px; line-height: 1.45; }
-  .grid2 { display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; align-items: center; }
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
-  @media (max-width: 560px) { .grid3 { grid-template-columns: 1fr; } .logo { font-size: 17px; } }
-  input[type=text] { font-family: inherit; font-size: 17px; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--line); width: 100%; color: var(--ink); background: #071613; }
-  input[type=text]:focus { outline: 2px solid var(--mint); }
+  .btn { border: 0; border-radius: 12px; padding: 12px 20px; font-size: 17px; font-weight: 700; cursor: pointer; color: #2a1a05; background: linear-gradient(180deg, #ffd36b, #e5a92e); box-shadow: 0 4px 0 #8a5d12; transition: transform .08s; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a5d12; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+  .btn.jade { background: linear-gradient(180deg, #7af0c2, #36c48f); box-shadow: 0 4px 0 #1d7a57; color: #04251a; }
+  .btn.ruby { background: linear-gradient(180deg, #ff9180, #e5503f); box-shadow: 0 4px 0 #8f2c20; color: #2a0703; }
+  .btn.wood { background: linear-gradient(180deg, #b98450, #8a5a2e); box-shadow: 0 4px 0 #4f3116; color: #fff3df; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  input[type=text] { font-family: inherit; font-size: 17px; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--line); width: 100%; color: var(--ink); background: rgba(8,5,2,.85); }
+  input[type=text]:focus { outline: 2px solid var(--gold); }
   label.f { display: block; font-weight: 600; margin: 12px 0 6px; font-size: 15px; }
-  .seg { display: inline-flex; background: #071613; border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
+  .seg { display: inline-flex; background: rgba(8,5,2,.85); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
   .seg button { border: 0; background: transparent; color: var(--muted); padding: 9px 18px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
-  .seg button.on { background: var(--mint); color: #062019; }
-  .rule { background: #071613; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 12px; padding: 10px 14px; font-size: 15px; line-height: 1.5; margin-top: 8px; }
-  .rule b { color: var(--cyan); }
-  .stat { font-size: 28px; font-weight: 800; color: var(--volt); } .stat small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; }
-  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #12443a; color: var(--mint); }
-
-  /* play screen */
-  .play { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
-  @media (max-width: 980px) { .play { grid-template-columns: 1fr; } }
-  .prompt { font-size: 19px; font-weight: 600; line-height: 1.4; min-height: 54px; }
-  .prompt .v { color: var(--volt); font-weight: 800; }
-  .target { display: inline-flex; align-items: center; gap: 8px; background: #2a2208; border: 1px solid #6b5614; color: var(--volt); border-radius: 12px; padding: 4px 12px; font-weight: 800; font-size: 18px; }
-  .stage { position: relative; height: 318px; margin-top: 10px; border-radius: 18px; border: 1px solid var(--line); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
-    background-color: #0b2621; background-image: linear-gradient(rgba(61,255,181,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(61,255,181,.05) 1px, transparent 1px); background-size: 26px 26px; }
-  .stage svg.traces { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .blk { position: absolute; top: 0; left: 0; border: 0; padding: 0; border-radius: 14px; cursor: grab; color: #0a1512; font-weight: 800; display: flex; align-items: center; justify-content: center;
-    transition: transform .26s cubic-bezier(.3,1.4,.5,1), opacity .3s, filter .3s; box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.35), 0 6px 14px rgba(0,0,0,.35); z-index: 3; }
-  .blk:focus-visible { outline: 3px solid var(--volt); outline-offset: 3px; }
-  .blk.lift { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.35), 0 0 0 3px var(--volt), 0 18px 26px rgba(0,0,0,.5); z-index: 6; }
-  .blk.drag { transition: none; z-index: 9; pointer-events: none; cursor: grabbing; }
-  .blk.over { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), 0 0 0 4px var(--cyan); }
-  .blk.locked::after { content: "✓"; position: absolute; top: -9px; right: -7px; width: 22px; height: 22px; border-radius: 50%; background: var(--mint); color: #062019; font-size: 13px; display: grid; place-items: center; box-shadow: 0 2px 0 #1a9d70; }
-  .blk.gone { opacity: .16; filter: grayscale(1); cursor: default; }
-  .blk.dim { opacity: .38; filter: saturate(.3); }
-  .blk.found { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), 0 0 0 4px var(--mint), 0 0 26px rgba(61,255,181,.55); }
-  .blk.hint { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), 0 0 0 4px var(--hot), 0 0 22px rgba(255,92,138,.5); }
-  .blk .cmpb { position: absolute; top: -42px; left: 50%; transform: translateX(-50%); background: var(--volt); color: #241b00; border-radius: 10px; padding: 3px 9px; font-size: 14px; white-space: nowrap; font-weight: 800; }
-  .stage.fuzz .blk:not(.gone) { color: transparent; background: repeating-linear-gradient(45deg, #5c6b67 0 3px, #3c4845 3px 6px) !important; }
-  .stage.fuzz .blk .cmpb { color: #241b00; }
-  .idx { position: absolute; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--muted); text-align: center; z-index: 2; }
-  .mk { position: absolute; z-index: 4; font-weight: 800; font-size: 13px; text-align: center; white-space: nowrap; transition: left .26s, top .26s, width .26s; pointer-events: none; }
-  .mk .tag { display: inline-block; border-radius: 8px; padding: 2px 7px; }
-  .stage.tight .mk { font-size: 11px; } .stage.tight .mk .tag { padding: 1px 4px; } .stage.tight .idx { font-size: 10px; } .stage.tight .blk.locked::after { width: 14px; height: 14px; font-size: 9px; top: -6px; right: -4px; }
-  .stage.tight .blk .cmpb { font-size: 12px; top: -34px; }
-  .zone { position: absolute; border-radius: 16px; z-index: 1; transition: left .26s, width .26s, opacity .2s; pointer-events: none; }
-  .ctrls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
-  .side .card { padding: 16px; }
-  pre.code { margin: 8px 0 0; font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.65; background: #071613; border: 1px solid var(--line); border-radius: 12px; padding: 10px 6px; white-space: pre; overflow-x: auto; }
-  pre.code span { display: block; padding: 0 8px; border-radius: 6px; color: #b5d8cd; }
-  pre.code span.on { background: #24442b; color: var(--volt); }
-  .meter { height: 10px; background: #071613; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; margin-top: 8px; }
-  .meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--mint), var(--cyan)); width: 0; transition: width .3s; }
-  .streak { font-weight: 800; font-size: 22px; color: var(--volt); }
-  .toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: #071613; border: 2px solid var(--volt); color: var(--ink); border-radius: 12px; padding: 6px 14px; font-weight: 700; font-size: 16px; z-index: 12; pointer-events: none; animation: toast 1.8s ease forwards; white-space: nowrap; max-width: 94%; overflow: hidden; text-overflow: ellipsis; }
-  .toast.bad { border-color: var(--bad); }
-  @keyframes toast { 0% { opacity: 0; transform: translate(-50%, -8px); } 12% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
-  .pop { position: absolute; z-index: 11; font-weight: 800; font-size: 18px; color: var(--volt); pointer-events: none; animation: pop 1s ease-out forwards; }
-  @keyframes pop { 0% { opacity: 0; transform: translateY(6px) scale(.8); } 20% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-30px) scale(1); } }
-  .spark { position: absolute; width: 7px; height: 7px; border-radius: 50%; z-index: 10; pointer-events: none; animation: spark .6s ease-out forwards; }
-  @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
-  .villain { position: absolute; z-index: 13; border: 0; background: transparent; padding: 0; cursor: pointer; }
-  .villain .fuse { position: absolute; inset: -6px; }
-  .mini-static { position: absolute; right: 10px; top: 8px; z-index: 5; pointer-events: none; transition: transform .2s; }
-  .wobble { animation: wob .5s ease; } @keyframes wob { 25% { transform: rotate(-10deg) scale(1.1); } 75% { transform: rotate(10deg) scale(1.1); } }
-  .shake { animation: shake .35s ease; } @keyframes shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
-  .overlay { position: absolute; inset: 0; z-index: 15; background: rgba(5,16,14,.86); display: grid; place-items: center; padding: 16px; border-radius: 18px; }
-  .modal { position: fixed; inset: 0; background: rgba(3,10,9,.75); display: grid; place-items: center; z-index: 50; padding: 16px; }
+  .seg button.on { background: var(--gold); color: #2a1a05; }
+  .rule { background: rgba(8,5,2,.7); border: 1px solid var(--line); border-left: 4px solid var(--turq); border-radius: 12px; padding: 9px 13px; font-size: 14.5px; line-height: 1.5; margin-top: 8px; }
+  .rule b { color: var(--turq); }
+  .stat { font-size: 28px; font-weight: 800; color: var(--gold); } .stat small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .grid3 > div { background: rgba(8,5,2,.6); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .leftcol { position: absolute; left: 20px; top: 74px; bottom: 20px; width: min(470px, calc(100vw - 40px)); overflow-y: auto; display: flex; flex-direction: column; justify-content: center; }
+  .center { position: absolute; inset: 64px 16px 16px; display: grid; place-items: center; overflow-y: auto; }
+  .center > .panel { width: min(600px, 100%); }
+  .ptop { position: absolute; left: 50%; transform: translateX(-50%); top: 64px; width: min(780px, calc(100vw - 24px)); padding: 12px 16px; }
+  .prompt { font-size: 18px; font-weight: 600; line-height: 1.4; margin-top: 4px; }
+  .prompt .v { color: var(--gold); font-weight: 800; }
+  .target { display: inline-flex; align-items: center; gap: 6px; background: rgba(240,191,76,.15); border: 1px solid #8a6a22; color: var(--gold); border-radius: 10px; padding: 2px 10px; font-weight: 800; font-size: 16px; vertical-align: middle; font-family: "Rubik", sans-serif; }
+  .pbot { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; width: min(780px, calc(100vw - 24px)); padding: 12px 16px; }
+  .meter { height: 14px; background: rgba(8,5,2,.85); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 100%; border-radius: 99px; background: linear-gradient(90deg, #36c48f, #f0bf4c); transition: width .25s linear; }
+  .meter.danger i { background: linear-gradient(90deg, #e5503f, #ff9a3c); }
+  .pcode { position: absolute; right: 14px; top: 64px; width: 290px; max-height: calc(100vh - 90px); overflow-y: auto; padding: 14px; }
+  .pcode.closed { display: none; }
+  #screen.withcode .ptop, #screen.withcode .pbot { left: calc(50% - 152px); width: min(780px, calc(100vw - 340px)); }
+  pre.code { margin: 8px 0 0; font-family: "JetBrains Mono", monospace; font-size: 12.3px; line-height: 1.65; background: rgba(8,5,2,.85); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; white-space: pre; overflow-x: auto; }
+  pre.code span { display: block; padding: 0 8px; border-radius: 6px; color: #d9c4a0; }
+  pre.code span.on { background: rgba(240,191,76,.2); color: var(--gold); }
+  .streak { position: absolute; left: 16px; top: 66px; text-align: center; padding: 8px 14px; }
+  .streak .n { font-size: 30px; font-weight: 800; color: var(--gold); line-height: 1; }
+  .toastbox { position: absolute; left: 50%; transform: translateX(-50%); top: 182px; z-index: 9; pointer-events: none; width: min(640px, 92vw); text-align: center; }
+  .toast { display: inline-block; background: rgba(22,13,6,.94); border: 2px solid var(--gold); color: var(--ink); border-radius: 12px; padding: 8px 16px; font-weight: 700; font-size: 17px; animation: toast 2.1s ease forwards; }
+  .toast.bad { border-color: var(--ruby); }
+  @keyframes toast { 0% { opacity: 0; transform: translateY(8px); } 10% { opacity: 1; transform: none; } 82% { opacity: 1; } 100% { opacity: 0; } }
+  .modal { position: fixed; inset: 0; background: rgba(5,3,1,.7); display: grid; place-items: center; z-index: 50; padding: 16px; }
   .modal[hidden] { display: none; }
-  .modal .card { width: min(520px, 100%); max-height: 86vh; overflow: auto; }
+  .modal .panel { width: min(540px, 100%); max-height: 86vh; overflow: auto; }
   ol.lb { list-style: none; padding: 0; margin: 10px 0 0; }
   ol.lb li { display: grid; grid-template-columns: 34px 1fr auto auto; gap: 10px; padding: 8px 10px; border-radius: 10px; align-items: center; }
-  ol.lb li:nth-child(odd) { background: rgba(61,255,181,.05); } ol.lb li.me { background: rgba(255,210,63,.14); font-weight: 700; } ol.lb .s { font-weight: 800; color: var(--volt); }
-  .smash-wrap { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
-  canvas#smash { display: block; width: 100%; height: min(62vh, 520px); touch-action: none; cursor: crosshair; }
-  .smash-hud { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; gap: 8px; justify-content: space-between; pointer-events: none; flex-wrap: wrap; }
-  .demo { position: relative; height: 130px; }
-  .bounce { animation: bnc 2.4s ease-in-out infinite; } @keyframes bnc { 50% { transform: translateY(-8px) rotate(3deg); } }
-  @media (prefers-reduced-motion: reduce) { .blk, .mk, .zone { transition: none !important; } .bounce, .wobble, .shake, .pop, .spark, .toast { animation: none !important; } .spark { display: none; } }
+  ol.lb li:nth-child(odd) { background: rgba(240,191,76,.06); } ol.lb li.me { background: rgba(240,191,76,.18); font-weight: 700; } ol.lb .s { font-weight: 800; color: var(--gold); }
+  .runhud { position: absolute; left: 12px; right: 12px; top: 62px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .runpad { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; gap: 14px; }
+  .runpad button { width: 86px; height: 70px; font-size: 26px; border-radius: 18px; }
+  .hearts { letter-spacing: 2px; }
+  @media (max-width: 1100px) { .pcode { display: none; } .pcode.open { display: block; } }
+  @media (max-width: 640px) { .pbot .btn { padding: 9px 12px; font-size: 14.5px; } .pbot #ctrls > .note { display: none; } .prompt { font-size: 15.5px; } .ptop, .pbot { padding: 10px 12px; } .streak { display: none; } .logo { font-size: 16px; } .bar .chip { font-size: 12px; padding: 4px 7px; } .grid3 { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+  .nogl { position: fixed; inset: 0; display: grid; place-items: center; z-index: 60; padding: 20px; text-align: center; }
 </style>
 </head>
 <body>
-<div class="bar" id="bar"></div>
-<main id="app"></main>
+<canvas id="gl"></canvas>
+<div id="hud"><div class="bar pe" id="bar"></div><div id="screen"></div><div class="toastbox" id="toasts"></div></div>
 <div class="modal" id="modal" hidden></div>
 <script src="engine.js"></script>
-<script>
-(function () {
-'use strict';
+<script type="module">
+import * as THREE from './vendor/three.module.min.js';
 const E = window.SCEngine;
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const easeIO = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
 
 // ================= sound (synthesized) =================
 let AC = null, soundOn = store.get('sc-sound', '1') === '1';
@@ -155,45 +130,31 @@ function tone(f, d = 0.1, type = 'sine', vol = 0.06, slide = 0, delay = 0) {
   try {
     if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
     const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
-    o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), t + d);
+    o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
   } catch (e) {}
 }
 const SFX = {
-  pick() { tone(520, .06, 'triangle', .05); },
-  good(streak) { const f = 440 * Math.pow(2, Math.min(streak, 24) / 12); tone(f, .09, 'triangle', .06); tone(f * 1.5, .08, 'sine', .03, 0, .05); },
-  bad() { tone(180, .22, 'sawtooth', .05, -80); },
-  lock() { tone(880, .08, 'sine', .05); tone(1320, .12, 'sine', .04, 0, .07); },
-  win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, .16, 'triangle', .06, 0, i * .1)); },
-  zap(c) { const f = 300 + Math.min(c, 30) * 40; tone(f, .07, 'square', .035, 400); tone(f * 2, .05, 'sine', .03, 0, .04); },
-  fuzz() { tone(120, .4, 'sawtooth', .04, -40); },
-  thud() { tone(140, .12, 'sine', .07, -60); }
+  pick() { tone(330, .08, 'triangle', .05, 80); },
+  good(s) { const f = 392 * Math.pow(2, Math.min(s, 24) / 12); tone(f, .1, 'triangle', .06); tone(f * 1.5, .09, 'sine', .03, 0, .05); },
+  bad() { tone(140, .3, 'sawtooth', .05, -60); },
+  thud() { tone(90, .16, 'sine', .09, -40); tone(60, .2, 'triangle', .05, -20, .03); },
+  lock() { tone(784, .1, 'sine', .05); tone(1175, .14, 'sine', .04, 0, .08); },
+  win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, .18, 'triangle', .06, 0, i * .11)); },
+  rumble() { tone(55, .6, 'sawtooth', .035, -15); tone(48, .7, 'triangle', .05, -10, .05); },
+  grind() { tone(70, .35, 'sawtooth', .03, -20); },
+  coin(c) { const f = 880 * Math.pow(2, Math.min(c, 12) / 12); tone(f, .07, 'square', .03); tone(f * 1.5, .06, 'sine', .03, 0, .04); },
+  jump() { tone(300, .12, 'triangle', .05, 300); },
+  fall() { tone(400, .5, 'sine', .04, -330); }
 };
 
-// ================= the villain =================
-function staticSVG(mood = 'idle', size = 120) {
-  const pts = []; const R = 44, r = 34, N = 14;
-  for (let k = 0; k < N * 2; k++) { const a = Math.PI * k / N, rr = k % 2 ? r : R + (k % 4 === 0 ? 4 : 0); pts.push((60 + Math.cos(a) * rr).toFixed(1) + ',' + (62 + Math.sin(a) * rr).toFixed(1)); }
-  const eyes = mood === 'hurt'
-    ? '<path d="M38 52 l12 10 M50 52 l-12 10 M70 52 l12 10 M82 52 l-12 10" stroke="#1a0b33" stroke-width="5" stroke-linecap="round"/>'
-    : '<circle cx="45" cy="56" r="11" fill="#f4f0ff"/><circle cx="76" cy="56" r="11" fill="#f4f0ff"/><circle cx="' + (mood === 'laugh' ? 45 : 48) + '" cy="58" r="5" fill="#1a0b33"/><circle cx="' + (mood === 'laugh' ? 76 : 79) + '" cy="58" r="5" fill="#1a0b33"/>' +
-      '<path d="M33 41 l20 6 M88 41 l-20 6" stroke="#1a0b33" stroke-width="4" stroke-linecap="round"/>';
-  const mouth = mood === 'hurt' ? '<path d="M46 84 q15 -10 30 0" stroke="#1a0b33" stroke-width="4" fill="none" stroke-linecap="round"/>'
-    : mood === 'laugh' ? '<path d="M40 76 q21 24 42 0 z" fill="#1a0b33"/><path d="M48 77 l4 6 l4 -6 l4 6 l4 -6 l4 6 l4 -6" stroke="#f4f0ff" stroke-width="2" fill="none"/>'
-    : '<path d="M42 78 q19 14 38 0" stroke="#1a0b33" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M50 81 l3 5 l3 -4 l3 4 l3 -4 l3 4" stroke="#f4f0ff" stroke-width="2" fill="none"/>';
-  return '<svg viewBox="0 0 120 124" width="' + size + '" height="' + (size * 124 / 120) + '" aria-hidden="true">' +
-    '<path d="M60 8 l-7 -8 l3 9 l-6 1 l10 10" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linejoin="round"/>' +
-    '<polygon points="' + pts.join(' ') + '" fill="#7d4dff" stroke="#1a0b33" stroke-width="4" stroke-linejoin="round"/>' +
-    '<circle cx="60" cy="62" r="30" fill="#9b72ff"/>' + eyes + mouth + '</svg>';
-}
-
-// ================= game data =================
+// ================= algorithm content =================
 const ALGO_RULES = {
-  bubble: '<b>Bubble sort:</b> compare the two highlighted neighbours. If the left one is bigger, swap them; otherwise leave them. After each pass the biggest unsorted value has bubbled to the end. A pass with no swaps means it’s sorted, so stop.',
+  bubble: '<b>Bubble sort:</b> compare the two marked neighbours. If the left one is bigger, swap them; otherwise leave them. Each pass pushes the biggest unsorted value to the end. A pass with no swaps means it’s sorted, so stop.',
   selection: '<b>Selection sort:</b> on pass I, find the smallest value from index I to the end and swap it into index I. If it’s already there, leave it.',
-  binary: '<b>Binary search</b> (sorted data only): pick up the MID block, where MID = (LOW + HIGH) div 2 (round down). If it’s the target, done. Otherwise toss the half that can’t hold the target, MID included. If LOW passes HIGH, it’s not there.',
-  quick: '<b>Quicksort</b> (HL): the pivot is the <b>last</b> value of the section. Scan J from left to right: if A[J] is smaller than the pivot, swap it into the spot just after the small zone (I + 1); if not, leave it. Then swap the pivot in right after the small zone. Sort the left section, then the right.'
+  binary: '<b>Binary search</b> (sorted data only): lift the MID stone, where MID = (LOW + HIGH) div 2 (round down). If it’s the target, done. Otherwise drop the half that can’t hold the target, MID included. If LOW passes HIGH, it’s not there.',
+  quick: '<b>Quicksort</b> (HL): the pivot is the <b>last</b> value of the section. Scan J left to right: if A[J] is smaller than the pivot, swap it into the spot just after the small zone (I + 1); if not, leave it. Then swap the pivot in right after the small zone. Sort the left section, then the right.'
 };
 const CODE = {
   bubble: ['loop PASS from 0 to N-2', '  SWAPPED = false', '  loop J from 0 to N-2-PASS', '    if A[J] > A[J+1] then', '      swap A[J], A[J+1]', '      SWAPPED = true', '  if not SWAPPED then stop'],
@@ -201,268 +162,410 @@ const CODE = {
   binary: ['LOW = 0, HIGH = N-1', 'loop while LOW <= HIGH', '  MID = (LOW + HIGH) div 2', '  if A[MID] = TARGET then', '    return MID', '  else if A[MID] < TARGET then', '    LOW = MID + 1', '  else HIGH = MID - 1', 'return -1  // not found'],
   quick: ['quicksort(LO, HI):', '  if LO < HI then', '    P = partition(LO, HI)', '    quicksort(LO, P-1)', '    quicksort(P+1, HI)', '', 'partition(LO, HI):', '  PIVOT = A[HI], I = LO - 1', '  loop J from LO to HI-1', '    if A[J] < PIVOT then', '      I = I + 1', '      swap A[I], A[J]', '  swap A[I+1], A[HI]', '  return I + 1']
 };
-const CIRCUITS = {
+const CHAMBERS = {
   sl: [
-    { name: 'Boot Up', icon: '🔌', blurb: 'Static scrambled the power grid. Bubble sort it back, one neighbour swap at a time.', puzzles: [{ kind: 'bubble', n: 5 }, { kind: 'bubble', n: 6, maxOps: 15 }] },
-    { name: 'Selection Station', icon: '🎯', blurb: 'Grab the smallest block and slam it into place. Pass after pass.', puzzles: [{ kind: 'selection', n: 5 }, { kind: 'selection', n: 6 }] },
-    { name: 'Search Party', icon: '🔎', blurb: 'Static hid a value in a sorted row. Halve the search until you find it, or prove it isn’t there.', puzzles: [{ kind: 'binary', n: 11 }, { kind: 'binary', n: 13, found: false }] },
-    { name: 'Mixed Signals', icon: '📡', blurb: 'All three algorithms. And Static has started fuzzing your blocks, so zap him when he shows up.', ambush: 1, puzzles: [{ kind: 'bubble', n: 6, maxOps: 15 }, { kind: 'selection', n: 7 }, { kind: 'binary', n: 15 }] },
-    { name: 'Static’s Overload', icon: '⚡', blurb: 'Boss circuit. Bigger arrays, more fuzz. Keep that streak alive.', ambush: 2, boss: true, puzzles: [{ kind: 'bubble', n: 7, maxOps: 21 }, { kind: 'selection', n: 7 }, { kind: 'binary', n: 15, found: false }] }
+    { name: 'The Bubbling Vault', blurb: 'The door seals behind you and the walls start to grind. Bubble sort the stones to hold them back.', puzzles: [{ kind: 'bubble', n: 5 }, { kind: 'bubble', n: 6, maxOps: 15 }] },
+    { name: 'Hall of the Smallest', blurb: 'Lift the smallest stone and set it in its place, pass after pass.', puzzles: [{ kind: 'selection', n: 5 }, { kind: 'selection', n: 6 }] },
+    { name: 'The Halving Pit', blurb: 'The stones are sorted. Somewhere is the one you seek. Drop half the floor away with each guess.', puzzles: [{ kind: 'binary', n: 11 }, { kind: 'binary', n: 13, found: false }] },
+    { name: 'Chamber of Trials', blurb: 'All three algorithms, and the walls move faster.', speed: 1.15, puzzles: [{ kind: 'bubble', n: 6, maxOps: 15 }, { kind: 'selection', n: 7 }, { kind: 'binary', n: 15 }] },
+    { name: 'The Idol’s Sanctum', blurb: 'The final room. Bigger rows, a stone that may not exist, and walls that do not wait.', speed: 1.3, boss: true, puzzles: [{ kind: 'bubble', n: 7, maxOps: 21 }, { kind: 'selection', n: 7 }, { kind: 'binary', n: 15, found: false }] }
   ],
   hl: [
-    { name: 'Boot Up', icon: '🔌', blurb: 'Warm-up: one bubble sort, one selection sort. Every step by hand.', puzzles: [{ kind: 'bubble', n: 6, maxOps: 15 }, { kind: 'selection', n: 6 }] },
-    { name: 'Search Party', icon: '🔎', blurb: 'Bigger sorted rows. Find the target, or prove it isn’t there.', puzzles: [{ kind: 'binary', n: 13, found: false }, { kind: 'binary', n: 15 }] },
-    { name: 'Recursion Reactor', icon: '🌀', blurb: 'Quicksort: partition around the pivot, then recurse on each side.', puzzles: [{ kind: 'quick', n: 6 }, { kind: 'quick', n: 7, maxOps: 22 }] },
-    { name: 'Mixed Signals', icon: '📡', blurb: 'Bubble, selection and quicksort back to back. Static has started fuzzing your blocks.', ambush: 1, puzzles: [{ kind: 'bubble', n: 7, maxOps: 21 }, { kind: 'selection', n: 7 }, { kind: 'quick', n: 7, maxOps: 22 }] },
-    { name: 'Static’s Overload', icon: '⚡', blurb: 'Boss circuit. Eight-block quicksort, a missing value, and constant fuzz.', ambush: 2, boss: true, puzzles: [{ kind: 'quick', n: 8, maxOps: 26 }, { kind: 'binary', n: 15, found: false }, { kind: 'bubble', n: 7, maxOps: 21 }] }
+    { name: 'The Bubbling Vault', blurb: 'Warm-up: one bubble sort, one selection sort, every step by hand.', puzzles: [{ kind: 'bubble', n: 6, maxOps: 15 }, { kind: 'selection', n: 6 }] },
+    { name: 'The Halving Pit', blurb: 'Long sorted rows. Find the stone, or prove it isn’t here.', puzzles: [{ kind: 'binary', n: 13, found: false }, { kind: 'binary', n: 15 }] },
+    { name: 'The Recursion Well', blurb: 'Quicksort: partition around the pivot, then go deeper on each side.', puzzles: [{ kind: 'quick', n: 6 }, { kind: 'quick', n: 7, maxOps: 22 }] },
+    { name: 'Chamber of Trials', blurb: 'Bubble, selection and quicksort back to back. The walls move faster.', speed: 1.15, puzzles: [{ kind: 'bubble', n: 7, maxOps: 21 }, { kind: 'selection', n: 7 }, { kind: 'quick', n: 7, maxOps: 22 }] },
+    { name: 'The Idol’s Sanctum', blurb: 'The final room. An eight-stone quicksort, a missing stone, and walls that do not wait.', speed: 1.3, boss: true, puzzles: [{ kind: 'quick', n: 8, maxOps: 26 }, { kind: 'binary', n: 15, found: false }, { kind: 'bubble', n: 7, maxOps: 21 }] }
   ]
 };
 
-const G = {
-  screen: 'title', mode: store.get('sc-mode', 'sl'), nick: store.get('sc-nick', ''), cls: store.get('sc-cls', ''),
-  circuit: 0, pIndex: 0, score: 0, streak: 0, bestStreak: 0, moves: 0, mistakes: 0, perfect: 0, puzzlesDone: 0, shields: 0, zapsTotal: 0
-};
-let P = null; // current puzzle state
+const G = { screen: 'title', mode: store.get('sc-mode', 'sl'), nick: store.get('sc-nick', ''), cls: store.get('sc-cls', ''),
+  chamber: 0, pIndex: 0, score: 0, streak: 0, bestStreak: 0, moves: 0, mistakes: 0, perfect: 0, puzzlesDone: 0, crushes: 0, wedges: 0, coinsTotal: 0 };
+let P = null, activeScene = 'temple';
 
-// ================= top bar =================
+// ================= renderer =================
+const canvas = $('#gl');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+} catch (e) {
+  document.body.insertAdjacentHTML('beforeend', '<div class="nogl"><div class="panel"><h2>The temple needs 3D graphics</h2><p class="sub">This browser couldn’t start WebGL. Try Chrome, or turn on hardware acceleration in the browser settings.</p></div></div>');
+  throw e;
+}
+let pixelCap = 1.5;
+renderer.setPixelRatio(Math.min(pixelCap, window.devicePixelRatio || 1));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+
+// ================= canvas textures =================
+function cnv(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
+function speckle(ctx, w, h, n, dark = .22, light = .12) {
+  for (let k = 0; k < n; k++) { const x = Math.random() * w, y = Math.random() * h, r = Math.random() * 2.2 + .4;
+    ctx.fillStyle = Math.random() < .55 ? 'rgba(0,0,0,' + (Math.random() * dark) + ')' : 'rgba(255,236,200,' + (Math.random() * light) + ')'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
+}
+function tex(c, rx = 1, ry = 1) { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t; }
+function floorCanvas() {
+  const [c, x] = cnv(512, 512); x.fillStyle = '#5e4c37'; x.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const s = Math.random() * 18 - 9; x.fillStyle = 'rgb(' + (98 + s) + ',' + (80 + s) + ',' + (58 + s) + ')'; x.fillRect(i * 128 + 3, j * 128 + 3, 122, 122); }
+  speckle(x, 512, 512, 2600); x.strokeStyle = 'rgba(20,12,4,.8)'; x.lineWidth = 6; for (let k = 0; k <= 4; k++) { x.beginPath(); x.moveTo(k * 128, 0); x.lineTo(k * 128, 512); x.stroke(); x.beginPath(); x.moveTo(0, k * 128); x.lineTo(512, k * 128); x.stroke(); }
+  return c;
+}
+function brickCanvas(base = [122, 96, 68], glyphs = false) {
+  const [c, x] = cnv(512, 512); x.fillStyle = '#2a1c10'; x.fillRect(0, 0, 512, 512);
+  for (let r = 0; r < 8; r++) for (let k = -1; k < 5; k++) { const off = r % 2 ? 64 : 0, s = Math.random() * 22 - 11;
+    x.fillStyle = 'rgb(' + (base[0] + s) + ',' + (base[1] + s) + ',' + (base[2] + s) + ')'; x.fillRect(k * 128 + off + 3, r * 64 + 3, 122, 58); }
+  speckle(x, 512, 512, 2400);
+  if (glyphs) {
+    const sy = ['<', '>', '≤', '≥', '÷', '↔', '½', '⇅'];
+    x.font = 'bold 40px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    for (let k = 0; k < 7; k++) { const gx = 40 + Math.random() * 430, gy = 40 + Math.random() * 430, g = sy[k % sy.length];
+      x.fillStyle = 'rgba(255,220,150,.18)'; x.fillText(g, gx + 2, gy + 2); x.fillStyle = 'rgba(30,18,6,.75)'; x.fillText(g, gx, gy); }
+  }
+  return c;
+}
+function hueFor(v) { const t = clamp((v - 2) / 97, 0, 1); return 205 - t * 200; }
+const blockTexCache = new Map();
+function blockTextures(v) {
+  if (blockTexCache.has(v)) return blockTexCache.get(v);
+  const hue = hueFor(v), mk = num => {
+    const [c, x] = cnv(256, 256);
+    x.fillStyle = 'hsl(' + hue + ' 42% 47%)'; x.fillRect(0, 0, 256, 256); speckle(x, 256, 256, 700, .25, .14);
+    x.fillStyle = 'rgba(255,240,210,.22)'; x.fillRect(0, 0, 256, 10); x.fillRect(0, 0, 10, 256); x.fillStyle = 'rgba(0,0,0,.3)'; x.fillRect(0, 246, 256, 10); x.fillRect(246, 0, 10, 256);
+    if (num) {
+      x.font = '800 ' + (String(v).length > 2 ? 104 : 132) + 'px Rubik, "Arial Black", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillStyle = 'rgba(255,240,210,.45)'; x.fillText(v, 131, 137); x.fillStyle = '#1e1307'; x.fillText(v, 128, 133);
+    }
+    return tex(c);
+  };
+  const r = { face: mk(true), side: mk(false) }; blockTexCache.set(v, r); return r;
+}
+function glowTexture() { const [c, x] = cnv(128, 128); const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,190,90,.9)'); g.addColorStop(.4, 'rgba(255,140,40,.35)'); g.addColorStop(1, 'rgba(255,120,30,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const labelCache = new Map();
+function label(text, bg = '#f0bf4c', fg = '#2a1a05', h = .34) {
+  const key = text + '|' + bg + '|' + fg;
+  let t = labelCache.get(key);
+  if (!t) {
+    const mx = cnv(4, 4)[1]; mx.font = '800 56px Rubik, Arial, sans-serif'; const w = Math.ceil(mx.measureText(text).width) + 44;
+    const [c, x] = cnv(w, 84); x.font = '800 56px Rubik, Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    if (bg !== 'none') { x.fillStyle = bg; const r = 22; x.beginPath(); x.moveTo(r, 4); x.arcTo(w - 4, 4, w - 4, 80, r); x.arcTo(w - 4, 80, 4, 80, r); x.arcTo(4, 80, 4, 4, r); x.arcTo(4, 4, w - 4, 4, r); x.fill(); }
+    else { x.fillStyle = 'rgba(0,0,0,.55)'; x.fillText(text, w / 2 + 2, 47); }
+    x.fillStyle = fg; x.fillText(text, w / 2, 45);
+    t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.userData = { aspect: w / 84 }; labelCache.set(key, t);
+  }
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false }));
+  s.scale.set(h * t.userData.aspect, h, 1); s.renderOrder = 5; return s;
+}
+
+// ================= the temple =================
+const temple = new THREE.Scene();
+temple.background = new THREE.Color(0x0b0704); temple.fog = new THREE.Fog(0x0b0704, 16, 42);
+const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, .1, 120);
+camera.position.set(0, 6, 10);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(56, 40), new THREE.MeshStandardMaterial({ map: tex(floorCanvas(), 14, 10), roughness: .92 })); floor.rotation.x = -Math.PI / 2; floor.position.z = 4; floor.receiveShadow = true; temple.add(floor);
+const back = new THREE.Mesh(new THREE.BoxGeometry(56, 10, 1), new THREE.MeshStandardMaterial({ map: tex(brickCanvas([112, 88, 62], true), 7, 1.25), roughness: .95 })); back.position.set(0, 5, -3.6); back.receiveShadow = true; temple.add(back);
+const lintel = new THREE.Mesh(new THREE.BoxGeometry(56, 1.2, 14), new THREE.MeshStandardMaterial({ color: 0x241709, roughness: 1 })); lintel.position.set(0, 9.2, 2); temple.add(lintel);
+// the two moving walls: plain stone slabs
+const wallMat = new THREE.MeshStandardMaterial({ map: tex(brickCanvas([128, 100, 70]), 1.6, 1.4), roughness: .9 });
+const WALL_W = 1.6;
+function makeWall() { const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.BoxGeometry(WALL_W, 8, 13), wallMat); m.position.set(0, 4, 2.6); m.castShadow = true; m.receiveShadow = true; g.add(m);
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(WALL_W + .3, .5, 13.2), new THREE.MeshStandardMaterial({ color: 0x4a3420, roughness: .9 })); trim.position.set(0, .25, 2.6); g.add(trim); return g; }
+const wallL = makeWall(), wallR = makeWall(); temple.add(wallL, wallR);
+// torches
+const glowTex = glowTexture(), torches = [];
+function torch(x, lit) {
+  const g = new THREE.Group();
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(.07, .1, .9, 8), new THREE.MeshStandardMaterial({ color: 0x4a2f15, roughness: .8 })); stick.rotation.x = .35; g.add(stick);
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(.2, .12, .22, 10), new THREE.MeshStandardMaterial({ color: 0x3b2a1a, metalness: .5, roughness: .5 })); cup.position.set(0, .5, .16); g.add(cup);
+  const flame = new THREE.Mesh(new THREE.ConeGeometry(.15, .45, 10), new THREE.MeshBasicMaterial({ color: 0xffa640 })); flame.position.set(0, .82, .18); g.add(flame);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glow.scale.set(1.8, 1.8, 1); glow.position.set(0, .86, .2); g.add(glow);
+  let light = null; if (lit) { light = new THREE.PointLight(0xff9a40, 26, 20, 1.6); light.position.set(0, 1, .7); g.add(light); }
+  g.position.set(x, 2.7, -3); temple.add(g); torches.push({ g, flame, light, glow, seed: Math.random() * 10 });
+}
+torch(-5.2, true); torch(5.2, true); torch(-11.5, false); torch(11.5, false);
+temple.add(new THREE.HemisphereLight(0xd9bb8f, 0x23160a, .75));
+const key = new THREE.DirectionalLight(0xffeccc, 1.5); key.position.set(4, 10, 8); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+Object.assign(key.shadow.camera, { left: -14, right: 14, top: 10, bottom: -6, near: 1, far: 30 }); temple.add(key);
+// drifting dust
+const DUST = 260, dustGeo = new THREE.BufferGeometry(), dustPos = new Float32Array(DUST * 3);
+for (let k = 0; k < DUST; k++) { dustPos[k * 3] = (Math.random() - .5) * 22; dustPos[k * 3 + 1] = Math.random() * 8; dustPos[k * 3 + 2] = Math.random() * 9 - 3; }
+dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xe8c99a, size: .05, transparent: true, opacity: .55, depthWrite: false })); temple.add(dust);
+let dustBoost = 0;
+
+// ================= the row of stones =================
+const ROW = { group: new THREE.Group(), marks: new THREE.Group(), blocks: [], plinths: [], n: 0, size: 1, spacing: 1.3, baseY: .7, half: 3 };
+temple.add(ROW.group, ROW.marks);
+const plinthMat = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: .9 });
+function xAt(pos) { return (pos - (ROW.n - 1) / 2) * ROW.spacing; }
+function clearGroup(gr) { while (gr.children.length) { const c = gr.children.pop(); c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); }); } }
+function buildRow(values) {
+  clearGroup(ROW.group); clearGroup(ROW.marks); ROW.blocks = []; ROW.plinths = [];
+  const n = values.length; ROW.n = n; ROW.size = n > 12 ? .8 : n > 8 ? .9 : 1; ROW.spacing = ROW.size * (n > 12 ? 1.22 : 1.3); ROW.baseY = .2 + ROW.size / 2; ROW.half = n ? xAt(n - 1) + ROW.size / 2 : 3;
+  for (let pos = 0; pos < n; pos++) {
+    const p = new THREE.Mesh(new THREE.BoxGeometry(ROW.size * 1.12, .2, ROW.size * 1.12), plinthMat.clone()); p.position.set(xAt(pos), .1, 0); p.receiveShadow = true; ROW.group.add(p); ROW.plinths.push(p);
+    const ix = label(String(pos), 'none', '#e6cfa3', ROW.size * .3); ix.position.set(xAt(pos), .16, ROW.size * .56 + .3); ROW.group.add(ix);
+  }
+  values.forEach((v, id) => {
+    const t = blockTextures(v), side = new THREE.MeshStandardMaterial({ map: t.side, roughness: .85 }), face = new THREE.MeshStandardMaterial({ map: t.face, roughness: .85 });
+    const m = new THREE.Mesh(new THREE.BoxGeometry(ROW.size, ROW.size, ROW.size), [side, side, face, side, face, side]);
+    m.position.set(xAt(id), ROW.baseY, 0); m.castShadow = true; m.userData = { id, v, side, face, lift: 0, liftTarget: 0, spin: 0, tw: false };
+    ROW.group.add(m); ROW.blocks.push(m);
+  });
+}
+function meshOf(id) { return ROW.blocks[id]; }
+
+// ================= tweens =================
+const tweens = [];
+let FAST = false;
+function anim(dur, fn) { return new Promise(res => { if (reduceMotion) dur = Math.min(dur, .12); if (FAST) dur = .001; tweens.push({ t: 0, dur, fn, res }); }); }
+function stepTweens(dt) { for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; tw.t += dt; const k = Math.min(1, tw.t / tw.dur); tw.fn(k); if (k >= 1) { tweens.splice(i, 1); tw.res(); } } }
+async function swapAnim(idA, idB, posA, posB) {
+  const a = meshOf(idA), b = meshOf(idB), xa = xAt(posA), xb = xAt(posB), ya = a.position.y, yb = b.position.y, hop = ROW.size * 1.1 + Math.abs(posA - posB) * .12;
+  a.userData.tw = b.userData.tw = true; a.userData.liftTarget = 0; b.userData.liftTarget = 0;
+  await anim(.5, k => { const e = easeIO(k), s = Math.sin(Math.PI * k);
+    a.position.set(lerp(xa, xb, e), lerp(ya, ROW.baseY, e) + s * hop, s * .75); b.position.set(lerp(xb, xa, e), lerp(yb, ROW.baseY, e) + s * hop * .55, -s * .75);
+    a.rotation.z = s * .25; b.rotation.z = -s * .2; });
+  a.position.set(xb, ROW.baseY, 0); b.position.set(xa, ROW.baseY, 0);
+  a.rotation.z = b.rotation.z = 0; a.userData.lift = b.userData.lift = 0; a.userData.tw = b.userData.tw = false; SFX.thud(); dustBoost = Math.max(dustBoost, .4); shake(.06);
+}
+
+// ================= camera fitting (keeps the row clear of the HUD) =================
+const camGoal = { pos: new THREE.Vector3(0, 6, 11), look: new THREE.Vector3(0, .8, 0) }, camLook = new THREE.Vector3(0, .8, 0);
+let shakeT = 0, shakeAmp = 0;
+function shake(a) { if (reduceMotion) return; shakeT = .35; shakeAmp = Math.max(shakeAmp, a); }
+function fitCamera(margins = {}) {
+  const W = innerWidth, H = innerHeight, L = margins.l || 0, R = margins.r || 0, T = margins.t || 0, B = margins.b || 0;
+  const fullW = W + Math.abs(L - R), fullH = H + Math.abs(T - B), aw = Math.max(200, W - L - R), ah = Math.max(160, H - T - B);
+  camera.aspect = fullW / fullH;
+  camera.setViewOffset(fullW, fullH, R > L ? R - L : 0, B > T ? B - T : 0, W, H);
+  const tv = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)), hw = (ROW.half || 3) + 1.1, vh = 2.6;
+  const d = Math.max(7, hw * fullH / (tv * aw), vh * fullH / (tv * ah));
+  const dir = new THREE.Vector3(0, .52, .86).normalize();
+  camGoal.look.set(0, .75, .2); camGoal.pos.copy(camGoal.look).addScaledVector(dir, d);
+  temple.fog.near = d + 6; temple.fog.far = d + 34; camera.far = d + 60;
+  camera.updateProjectionMatrix();
+}
+function hudMargins() {
+  const m = { l: 0, r: 0, t: 60, b: 0 };
+  const top = $('.ptop'), bot = $('.pbot'), code = $('.pcode'), left = $('.leftcol .panel');
+  if (top && top.offsetParent) m.t = top.getBoundingClientRect().bottom + 6;
+  if (bot && bot.offsetParent) m.b = innerHeight - bot.getBoundingClientRect().top + 6;
+  if (code && getComputedStyle(code).display !== 'none') m.r = innerWidth - code.getBoundingClientRect().left + 6;
+  if (left && innerWidth > 900) m.l = left.getBoundingClientRect().right + 10;
+  return m;
+}
+function refit() { fitCamera(hudMargins()); }
+window.addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); if (G.screen === 'play') syncCodeLayout(); runCam.aspect = innerWidth / innerHeight; runCam.updateProjectionMatrix(); refit(); });
+
+// ================= walls =================
+const WALLS = { shown: 9 };
+function wallInnerFor(frac) { return lerp(ROW.half + .05, ROW.half + 6.5, clamp(frac, 0, 1)); }
+function setWalls(inner) { wallL.position.x = -(inner + WALL_W / 2); wallR.position.x = inner + WALL_W / 2; }
+
+// ================= HUD helpers =================
 function renderBar() {
-  const playing = G.screen !== 'title' && G.screen !== 'end';
-  $('#bar').innerHTML = '<div class="logo"><span class="bolt">⚡</span>SORT CIRCUIT</div>' +
-    (playing ? '<span class="chip">Circuit <b>' + (G.circuit + 1) + '/5</b></span><span class="chip">Score <b id="scoreChip">' + G.score.toLocaleString() + '</b></span>' +
-      '<span class="chip" title="Shields block one of Static’s fuzz attacks">🛡️ <b id="shieldChip">' + G.shields + '</b></span><span class="chip">' + G.mode.toUpperCase() + '</span>' : '') +
+  const playing = !['title', 'end'].includes(G.screen);
+  $('#bar').innerHTML = '<div class="logo">🗿 SORT CIRCUIT</div>' +
+    (playing ? '<span class="chip">Chamber <b>' + (G.chamber + 1) + '/5</b></span><span class="chip">Score <b id="scoreChip">' + G.score.toLocaleString() + '</b></span>' +
+      '<span class="chip" title="Wedges jam the walls and buy you time">🪵 <b id="wedgeChip">' + G.wedges + '</b></span><span class="chip">' + G.mode.toUpperCase() + '</span>' : '') +
+    (G.screen === 'play' ? '<button class="iconbtn" id="codeBtn" title="Show or hide the pseudocode">📜</button>' : '') +
     '<button class="iconbtn" id="lbBtn" aria-label="Class leaderboard" title="Class leaderboard">🏆</button><button class="iconbtn" id="sndBtn" aria-label="Toggle sound">' + (soundOn ? '🔊' : '🔇') + '</button>';
   $('#lbBtn').onclick = showLeaderboard;
   $('#sndBtn').onclick = () => { soundOn = !soundOn; store.set('sc-sound', soundOn ? '1' : '0'); renderBar(); };
+  const cb = $('#codeBtn'); if (cb) cb.onclick = () => { const p = $('.pcode'); if (!p) return; const vis = getComputedStyle(p).display !== 'none'; p.classList.toggle('closed', vis); p.classList.toggle('open', !vis); syncCodeLayout(); refit(); };
 }
+function syncCodeLayout() { const p = $('.pcode'), on = !!p && getComputedStyle(p).display !== 'none' && innerWidth > 1100; $('#screen').classList.toggle('withcode', on); }
 function bumpScore(d) { G.score = Math.max(0, G.score + d); const c = $('#scoreChip'); if (c) c.textContent = G.score.toLocaleString(); }
-function setScreen(name, html) { G.screen = name; stopDemo(); $('#app').innerHTML = html; renderBar(); window.scrollTo(0, 0); }
+function setScreen(name, html) { G.screen = name; $('#screen').classList.remove('withcode'); $('#screen').innerHTML = html; renderBar(); $('#toasts').innerHTML = ''; }
+function toast(text, bad) { const box = $('#toasts'); box.innerHTML = ''; const t = document.createElement('div'); t.className = 'toast' + (bad ? ' bad' : ''); t.textContent = text; box.appendChild(t); setTimeout(() => { if (t.isConnected) t.remove(); }, 2200); }
 
-// ================= title =================
-let demoTimer = null;
-function stopDemo() { if (demoTimer) { clearInterval(demoTimer); demoTimer = null; } }
+// ================= title (with a live demo row) =================
+let demoToken = 0;
 function titleScreen() {
-  setScreen('title', '<div class="grid2"><div>' +
-    '<div class="kicker">IB Computer Science · B2.4 Programming algorithms</div>' +
-    '<h1 style="font-size:clamp(40px,7vw,68px);font-weight:800;letter-spacing:.02em;line-height:1;margin:8px 0 12px">Sort <span style="color:var(--volt)">Circuit</span></h1>' +
-    '<p class="sub">Static, a gremlin made of pure interference, has scrambled the data. Pick up the blocks and <b style="color:var(--ink)">run the algorithms yourself</b>: every compare, every swap, every half thrown away. Keep your streak alive, and smash Static between circuits.</p>' +
-    '<div class="card" style="margin-top:16px">' +
+  P = null; activeScene = 'temple';
+  setScreen('title', '<div class="leftcol"><div class="panel pe">' +
+    '<div class="kicker">IB Computer Science · B2.4 algorithms</div>' +
+    '<h1 class="cinzel" style="font-size:clamp(36px,6vw,58px);font-weight:900;line-height:1;margin:8px 0 10px;color:var(--gold)">Sort Circuit</h1>' +
+    '<p class="sub">Five sealed temple chambers. The stone walls are closing in, and the only way to hold them back is to <b style="color:var(--ink)">run the algorithm yourself</b>: lift the stones, make every swap, drop every half. Mistakes make the walls lurch. Between chambers, outrun the boulder.</p>' +
     '<label class="f" for="nick">Your name (for the leaderboard)</label><input type="text" id="nick" maxlength="16" placeholder="e.g. Ada L." value="' + esc(G.nick) + '">' +
     '<label class="f" for="cls">Class code (optional, from your teacher)</label><input type="text" id="cls" maxlength="20" placeholder="e.g. cs-p3" value="' + esc(G.cls) + '">' +
     '<label class="f">Level</label><div class="seg" id="seg"><button type="button" data-m="sl">SL</button><button type="button" data-m="hl">HL</button></div>' +
     '<p class="note" id="modeNote" style="margin:8px 0 0"></p>' +
-    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Power up ⚡</button><button class="btn ghost" id="how" type="button">How to play</button></div></div></div>' +
-    '<div><div class="card"><div class="kicker">Live demo · bubble sort</div><div class="stage demo" id="demo" style="height:150px;margin-top:10px"></div>' +
-    '<div class="row" style="margin-top:12px;align-items:center"><div class="bounce" style="display:inline-block">' + staticSVG('laugh', 92) + '</div><div class="note" style="flex:1">“Ha! Your arrays are MINE. Bet you can’t sort them by hand.” <br>— Static</div></div></div></div></div>');
+    '<div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">Enter the temple</button><button class="btn ghost" id="how" type="button">How to play</button></div></div></div>');
   const setMode = m => { G.mode = m; store.set('sc-mode', m); document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
     $('#modeNote').innerHTML = m === 'sl' ? 'SL: bubble sort, selection sort, binary search (B2.4.1–B2.4.3).' : 'HL: everything in SL plus quicksort, the recursive one (B2.4.4–B2.4.5).'; };
   document.querySelectorAll('#seg button').forEach(b => b.onclick = () => setMode(b.dataset.m)); setMode(G.mode);
   $('#go').onclick = () => {
-    G.nick = ($('#nick').value.trim() || 'Player').slice(0, 16); G.cls = $('#cls').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
+    G.nick = ($('#nick').value.trim() || 'Explorer').slice(0, 16); G.cls = $('#cls').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
     store.set('sc-nick', G.nick); store.set('sc-cls', G.cls);
-    Object.assign(G, { circuit: 0, pIndex: 0, score: 0, streak: 0, bestStreak: 0, moves: 0, mistakes: 0, perfect: 0, puzzlesDone: 0, shields: 0, zapsTotal: 0 });
-    netJoin().then(() => netPush('c1', 0)); circuitIntro();
+    Object.assign(G, { chamber: 0, pIndex: 0, score: 0, streak: 0, bestStreak: 0, moves: 0, mistakes: 0, perfect: 0, puzzlesDone: 0, crushes: 0, wedges: 0, coinsTotal: 0 });
+    netJoin().then(() => netPush('c1', 0)); chamberIntro();
   };
   $('#how').onclick = howTo;
   runDemo();
 }
-function runDemo() {
-  const st = $('#demo'); if (!st) return;
-  let arr = E.shuffle([12, 27, 41, 58, 73, 90]), ops = E.bubbleOps(arr).ops, k = 0, hold = 0;
-  const draw = (hi) => { const W = st.clientWidth, n = arr.length, gap = 8, bw = Math.min(62, (W - 24 - gap * (n - 1)) / n), x0 = (W - (bw * n + gap * (n - 1))) / 2;
-    if (!st.children.length) arr.forEach(v => { const b = document.createElement('div'); b.className = 'blk'; b.dataset.v = v; b.textContent = v; st.appendChild(b); });
-    [...st.children].forEach(b => { const v = +b.dataset.v, i = arr.indexOf(v); b.style.cssText = blockStyle(v, bw, bw) + 'transform:translate(' + (x0 + i * (bw + gap)) + 'px,' + ((hi && hi.includes(i)) ? 30 : 46) + 'px);'; }); };
-  draw();
-  if (reduceMotion) return;
-  demoTimer = setInterval(() => {
-    if (!document.body.contains(st)) { stopDemo(); return; }
-    if (hold > 0) { hold--; if (!hold) { arr = E.shuffle(arr); ops = E.bubbleOps(arr).ops; k = 0; draw(); } return; }
-    const o = ops[k++]; if (!o) { hold = 3; draw(); return; }
-    if (o.swap) [arr[o.a], arr[o.b]] = [arr[o.b], arr[o.a]];
-    draw([o.a, o.b]);
-  }, 520);
+async function runDemo() {
+  const token = ++demoToken;
+  const arr = E.shuffle([12, 27, 41, 58, 73, 90]); buildRow(arr); WALLS.shown = ROW.half + 4; setWalls(WALLS.shown);
+  requestAnimationFrame(refit);
+  const order = arr.map((v, i) => i);
+  while (token === demoToken) {
+    const ops = E.bubbleOps(order.map(id => arr[id])).ops;
+    for (const o of ops) {
+      await sleep(reduceMotion ? 900 : 420);
+      if (token !== demoToken) return;
+      if (o.swap) { const ia = order[o.a], ib = order[o.b]; [order[o.a], order[o.b]] = [order[o.b], order[o.a]]; await swapAnim(ia, ib, o.a, o.b); }
+      if (token !== demoToken) return;
+    }
+    await sleep(1600); if (token !== demoToken) return;
+    E.shuffle(order.slice()).forEach((id, pos) => { order[pos] = id; });
+    for (let pos = 0; pos < order.length; pos++) meshOf(order[pos]).position.x = xAt(pos);
+  }
 }
 function howTo() {
-  const m = $('#modal'); m.innerHTML = '<div class="card"><h2 style="font-size:24px">How to play</h2>' +
-    '<p class="sub" style="font-size:16px">You run the algorithm. Static watches for mistakes.</p>' +
-    '<div class="rule"><b>Swap two blocks:</b> drag one block onto another, or tap one and then tap the other.</div>' +
-    '<div class="rule"><b>Leave it:</b> when the algorithm says “no swap”, press <b>Leave it</b> (or the space bar).</div>' +
-    '<div class="rule"><b>Binary search:</b> tap the MID block to pick it up, then toss the half that can’t hold the target.</div>' +
-    '<div class="rule"><b>Streak:</b> every correct move in a row raises your multiplier (×1.5 at 5, ×2 at 10, ×3 at 20). A mistake resets it.</div>' +
-    '<div class="rule"><b>Static attacks</b> (later circuits): when he pops up, tap him before his fuse runs out or he fuzzes your blocks. Shields from Static Smash block an attack.</div>' +
+  const m = $('#modal'); m.innerHTML = '<div class="panel"><h2 style="font-size:24px">How to play</h2>' +
+    '<p class="sub" style="font-size:15px">You run the algorithm, one step at a time. The walls keep moving.</p>' +
+    '<div class="rule"><b>Swap two stones:</b> click one to lift it, then click the other. (Keyboard: ← → to choose, Enter to lift.)</div>' +
+    '<div class="rule"><b>Leave it:</b> when the algorithm says “no swap”, press <b>Leave it</b> or the space bar.</div>' +
+    '<div class="rule"><b>Binary search:</b> click the MID stone to lift it, then drop the half that can’t hold the target.</div>' +
+    '<div class="rule"><b>The walls:</b> correct moves shove them back. Mistakes make them lurch in. If they reach the stones, you’re crushed and get a fresh row.</div>' +
+    '<div class="rule"><b>Streak:</b> correct moves in a row raise your multiplier (×1.5 at 5, ×2 at 10, ×3 at 20).</div>' +
+    '<div class="rule"><b>Boulder run:</b> between chambers, dodge and jump while the boulder chases you. Every 12 gold coins earns a 🪵 wedge, which jams the walls when you’re in trouble.</div>' +
     '<div class="row" style="margin-top:14px"><button class="btn" id="mclose" type="button">Got it</button></div></div>';
   m.hidden = false; $('#mclose').onclick = () => { m.hidden = true; m.innerHTML = ''; }; m.onclick = e => { if (e.target === m) { m.hidden = true; m.innerHTML = ''; } };
 }
 
-// block colour by value: cool (small) to warm (big)
-function blockStyle(v, w, h) {
-  const t = Math.max(0, Math.min(1, (v - 2) / 97)), hue = 190 - t * 190, light = 62 + Math.sin(t * Math.PI) * 4;
-  return 'width:' + w + 'px;height:' + h + 'px;font-size:' + Math.max(11, Math.min(32, Math.round(w * .42))) + 'px;border-radius:' + Math.max(6, Math.round(w * .17)) + 'px;background:linear-gradient(180deg,hsl(' + hue + ' 92% ' + (light + 10) + '%),hsl(' + hue + ' 85% ' + light + '%));';
-}
-
-// ================= circuit intro =================
-function circuitIntro() {
-  const C = CIRCUITS[G.mode][G.circuit], kinds = [...new Set(C.puzzles.map(p => p.kind))];
-  setScreen('intro', '<div class="grid2"><div class="card"><div class="kicker">Circuit ' + (G.circuit + 1) + ' of 5' + (C.boss ? ' · Boss' : '') + '</div>' +
-    '<h2 style="font-size:36px;margin:6px 0 10px">' + C.icon + ' ' + C.name + '</h2><p class="sub">' + C.blurb + '</p>' +
+// ================= chamber intro =================
+function chamberIntro() {
+  demoToken++; activeScene = 'temple'; P = null;
+  const C = CHAMBERS[G.mode][G.chamber], kinds = [...new Set(C.puzzles.map(p => p.kind))];
+  buildRow([]); WALLS.shown = 8; setWalls(8);
+  setScreen('intro', '<div class="center"><div class="panel pe"><div class="kicker">Chamber ' + (G.chamber + 1) + ' of 5' + (C.boss ? ' · final' : '') + '</div>' +
+    '<h2 style="font-size:34px;margin:6px 0 10px;color:var(--gold)">' + C.name + '</h2><p class="sub">' + C.blurb + '</p>' +
     kinds.map(k => '<div class="rule">' + ALGO_RULES[k] + '</div>').join('') +
-    (C.ambush ? '<div class="rule" style="border-left-color:var(--hot)"><b style="color:var(--hot)">Static attacks:</b> tap him before his fuse burns out, or your blocks get fuzzed for a few seconds.' + (G.shields ? ' You have ' + G.shields + ' shield' + (G.shields > 1 ? 's' : '') + '.' : '') + '</div>' : '') +
-    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Start (' + C.puzzles.length + ' arrays)</button></div></div>' +
-    '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG(C.boss ? 'laugh' : 'idle', 200) + '</div><p class="note">' + (C.boss ? '“This is my FINAL form. Mostly because I ran out of forms.”' : ['“Sorting? By HAND? In this economy?”', '“I scrambled them extra hard this time.”', '“Bet you round MID up. Everyone rounds MID up.”', '“I hid one of the values. Or did I?”'][G.circuit % 4]) + '</p></div></div>');
+    (C.speed ? '<div class="rule" style="border-left-color:var(--ruby)"><b style="color:var(--ruby)">Faster walls.</b> ' + (G.wedges ? 'You have ' + G.wedges + ' wedge' + (G.wedges > 1 ? 's' : '') + ' to jam them.' : 'Earn wedges in the boulder run to jam them.') + '</div>' : '') +
+    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Step inside (' + C.puzzles.length + ' rows)</button></div></div></div>');
+  fitCamera({ t: 60 });
   $('#go').onclick = () => { G.pIndex = 0; startPuzzle(); };
 }
 
 // ================= puzzle =================
 function startPuzzle() {
-  const C = CIRCUITS[G.mode][G.circuit], spec = C.puzzles[G.pIndex];
-  const pz = E.build(spec);
-  P = { pz, kind: pz.kind, k: 0, order: pz.start.map((v, i) => i), vals: pz.start.slice(), sel: null, stepMiss: 0, miss: 0, t0: Date.now(), done: false,
-    locked: new Set(), gone: new Set(), low: 0, high: pz.start.length - 1, picked: false, busy: false, ambush: C.ambush || 0, ambT: null, fuzzT: null, villain: false };
-  // order[pos] = block id; vals[id] = value
-  setScreen('play', '<div class="play"><div>' +
-    '<div class="row" style="justify-content:space-between"><div><div class="kicker">Circuit ' + (G.circuit + 1) + ' · array ' + (G.pIndex + 1) + ' of ' + C.puzzles.length + '</div><h2 style="font-size:26px;margin-top:2px">' + pz.algo + (pz.kind === 'binary' ? ' &nbsp;<span class="target">🎯 target ' + pz.target + '</span>' : '') + '</h2></div>' +
-    '<div style="text-align:right"><div class="note">streak</div><div class="streak" id="streak">0</div></div></div>' +
-    '<div class="prompt" id="prompt" style="margin-top:8px"></div>' +
-    '<div class="stage" id="stage"><div class="mini-static" id="mini">' + staticSVG('idle', 54) + '</div></div>' +
-    '<div class="ctrls" id="ctrls"></div></div>' +
-    '<div class="side"><div class="card"><div class="kicker">Pseudocode</div><pre class="code" id="code"></pre>' +
-    '<div class="note" style="margin-top:10px">Progress</div><div class="meter"><i id="prog"></i></div>' +
-    '<div class="row" style="justify-content:space-between;margin-top:10px"><span class="note">Mistakes: <b id="miss" style="color:var(--bad)">0</b></span><span class="note">Moves: <b id="mv">0/' + pz.ops.length + '</b></span></div>' +
-    '<div class="rule" style="font-size:13.5px">' + ALGO_RULES[pz.kind] + '</div></div></div></div>');
+  demoToken++; activeScene = 'temple'; tweens.length = 0;
+  const C = CHAMBERS[G.mode][G.chamber], spec = C.puzzles[G.pIndex], pz = E.build(spec);
+  const T = Math.round((22 + pz.ops.length * 4.6) / (C.speed || 1));
+  P = { pz, kind: pz.kind, k: 0, order: pz.start.map((v, i) => i), vals: pz.start.slice(), sel: null, stepMiss: 0, miss: 0, done: false, busy: false, crushed: false,
+    locked: new Set(), gone: new Set(), low: 0, high: pz.start.length - 1, picked: false, T, rem: T, hint: null, cursor: 0, kbd: false, foundPos: -1, lastRumble: 0 };
+  buildRow(pz.start);
+  setScreen('play',
+    '<div class="panel ptop pe"><div class="row" style="justify-content:space-between"><div class="kicker">Chamber ' + (G.chamber + 1) + ' · row ' + (G.pIndex + 1) + ' of ' + C.puzzles.length + '</div><div class="note">Moves <b id="mv">0/' + pz.ops.length + '</b> · Mistakes <b id="miss" style="color:var(--ruby)">0</b></div></div>' +
+    '<h2 style="font-size:22px;margin-top:2px">' + pz.algo + (pz.kind === 'binary' ? ' &nbsp;<span class="target">🎯 find ' + pz.target + '</span>' : '') + '</h2><div class="prompt" id="prompt"></div></div>' +
+    '<div class="panel streak"><div class="note">streak</div><div class="n" id="streak">0</div></div>' +
+    '<div class="panel pcode pe"><div class="kicker">Pseudocode</div><pre class="code" id="code"></pre><div class="rule" style="font-size:13px">' + ALGO_RULES[pz.kind] + '</div></div>' +
+    '<div class="panel pbot pe"><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="note">🧱 The walls</span><span class="note" id="wallTxt"></span></div><div class="meter" id="meter"><i id="meterI"></i></div>' +
+    '<div class="row" style="margin-top:10px" id="ctrls"></div></div>');
+  syncCodeLayout();
   $('#code').innerHTML = CODE[pz.kind].map((l, i) => '<span data-l="' + i + '">' + esc(l || ' ') + '</span>').join('');
-  const st = $('#stage');
-  pz.start.forEach((v, id) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'blk'; b.dataset.id = id; b.textContent = v; b.setAttribute('aria-label', 'block ' + v); st.appendChild(b); attachBlock(b); });
-  layout(); renderControls(); renderStep();
-  if (P.ambush) scheduleAmbush();
+  WALLS.shown = wallInnerFor(1); setWalls(WALLS.shown);
+  renderControls(); renderStep(); requestAnimationFrame(refit);
+  tone(110, .8, 'sawtooth', .03, -40); toast('The door seals. The walls begin to move…', true);
 }
-
-function geom() {
-  const st = $('#stage'), W = st.clientWidth, H = st.clientHeight, n = P.vals.length;
-  let gap = n > 10 ? 6 : 10, pad = 28;
-  if ((W - pad - gap * (n - 1)) / n < 36) { gap = 3; pad = 10; }
-  const bw = Math.floor(Math.min(84, (W - pad - gap * (n - 1)) / n)), x0 = Math.round((W - (bw * n + gap * (n - 1))) / 2), y0 = 80;
-  return { W, H, n, gap, bw, x0, y0, xAt: pos => x0 + pos * (bw + gap) };
-}
-function layout() {
-  if (!P) return; const g = geom(), st = $('#stage');
-  st.querySelectorAll('.idx').forEach(e => e.remove());
-  for (let pos = 0; pos < g.n; pos++) { const d = document.createElement('div'); d.className = 'idx'; d.style.cssText = 'left:' + g.xAt(pos) + 'px;width:' + g.bw + 'px;top:' + (g.y0 + g.bw + 30) + 'px'; d.textContent = pos; st.appendChild(d); }
-  P.order.forEach((id, pos) => {
-    const b = st.querySelector('.blk[data-id="' + id + '"]'); if (!b || b.classList.contains('drag')) return;
-    const lifted = b.classList.contains('lift') ? -18 : 0, dropped = P.gone.has(pos) ? 26 : 0;
-    b.style.cssText = blockStyle(P.vals[id], g.bw, g.bw) + 'transform:translate(' + g.xAt(pos) + 'px,' + (g.y0 + lifted + dropped) + 'px)';
-  });
-  drawMarkers();
-}
-window.addEventListener('resize', () => { if (G.screen === 'play') layout(); });
-
-function blockAt(pos) { return $('#stage .blk[data-id="' + P.order[pos] + '"]'); }
-function posOf(id) { return P.order.indexOf(+id); }
-function curVal(pos) { return P.vals[P.order[pos]]; }
-
-function drawMarkers() {
-  const st = $('#stage'); st.querySelectorAll('.mk,.zone').forEach(e => e.remove());
-  if (!P || P.done && P.kind !== 'binary') return;
-  const g = geom(), o = P.pz.ops[P.k];
-  const zone = (a, b, color, label) => { if (a > b) return; const z = document.createElement('div'); z.className = 'zone'; z.style.cssText = 'left:' + (g.xAt(a) - 6) + 'px;width:' + (g.xAt(b) - g.xAt(a) + g.bw + 12) + 'px;top:' + (g.y0 - 10) + 'px;height:' + (g.bw + 20) + 'px;background:' + color;
-    st.appendChild(z); if (label) mark(a, label, 'var(--muted)', 'transparent', g.y0 - 32, b); };
-  const mark = (pos, text, fg, bg, top, posEnd) => { const m = document.createElement('div'); m.className = 'mk'; const end = posEnd === undefined ? pos : posEnd;
-    m.style.cssText = 'left:' + g.xAt(pos) + 'px;width:' + (g.xAt(end) - g.xAt(pos) + g.bw) + 'px;top:' + top + 'px'; m.innerHTML = '<span class="tag" style="color:' + fg + ';background:' + bg + '">' + text + '</span>'; st.appendChild(m); };
-  const below = g.y0 + g.bw + 50, tight = g.bw < 40, T = (long, short) => tight ? short : long;
-  st.classList.toggle('tight', tight);
-  if (P.kind === 'bubble' && o) { zone(o.a, o.b, 'rgba(255,210,63,.12)'); mark(o.a, 'J', '#241b00', 'var(--volt)', below); mark(o.b, 'J+1', '#241b00', 'var(--volt)', below); }
-  if (P.kind === 'selection' && o) { zone(o.i, g.n - 1, 'rgba(77,225,255,.08)', 'unsorted part'); mark(o.i, 'I', '#062019', 'var(--cyan)', below); }
-  if (P.kind === 'binary') {
-    if (P.low <= P.high) { zone(P.low, P.high, 'rgba(77,225,255,.1)'); mark(P.low, T('LOW', 'L'), '#062019', 'var(--cyan)', below); mark(P.high, T('HIGH', 'H'), '#062019', 'var(--cyan)', P.high === P.low ? below + 24 : below); }
-    if (P.picked && o) mark(o.mid, T('MID', 'M'), '#241b00', 'var(--volt)', below + (o.mid === P.low || o.mid === P.high ? 24 : 0) + (P.low === P.high ? 24 : 0));
-  }
-  if (P.kind === 'quick' && o) {
-    zone(o.lo, o.hi, 'rgba(169,139,255,.1)', 'quicksort(' + o.lo + ', ' + o.hi + ')');
-    const i = o.t === 'qcmp' ? o.i : o.to - 1;
-    if (i >= o.lo) zone(o.lo, i, 'rgba(61,255,181,.14)');
-    mark(o.hi, T('★ pivot', '★'), '#1a0b33', 'var(--purple)', below);
-    if (o.t === 'qcmp') { mark(o.j, 'J', '#241b00', 'var(--volt)', below + 24); mark(Math.max(o.lo, 0), T('I = ', 'I=') + o.i, 'var(--mint)', 'transparent', below + 48); }
-    else mark(o.to, 'I+1', '#062019', 'var(--mint)', below + 24);
-  }
-}
-
-function hl(lines) { document.querySelectorAll('#code span').forEach(s => s.classList.toggle('on', lines.includes(+s.dataset.l))); }
-
 function renderControls() {
-  const c = $('#ctrls');
+  const c = $('#ctrls'), w = '<button class="btn wood" id="wedge" type="button" title="Jam the walls (+12 seconds)">🪵 Wedge (' + G.wedges + ')</button>';
   if (P.kind === 'binary') {
-    c.innerHTML = '<button class="btn hot" id="tossL" type="button" disabled>⬅ Toss left part</button><button class="btn hot" id="tossR" type="button" disabled>Toss right part ➡</button><span class="note" id="bnote">Tap the MID block first.</span>';
+    c.innerHTML = '<button class="btn ruby" id="tossL" type="button" disabled>⬅ Drop left part</button><button class="btn ruby" id="tossR" type="button" disabled>Drop right part ➡</button>' + w + '<span class="note" id="bnote">Click the MID stone first.</span>';
     $('#tossL').onclick = () => act({ kind: 'cut', side: 'left' }); $('#tossR').onclick = () => act({ kind: 'cut', side: 'right' });
+    if (P.picked) { $('#tossL').disabled = false; $('#tossR').disabled = false; }
   } else {
-    c.innerHTML = '<button class="btn volt" id="keep" type="button">✋ Leave it <span class="mono" style="font-size:12px;opacity:.7">space</span></button><span class="note">Swap: drag a block onto another, or tap two blocks.</span>';
+    c.innerHTML = '<button class="btn jade" id="keep" type="button">✋ Leave it <span class="mono" style="font-size:12px;opacity:.7">space</span></button>' + w + '<span class="note">Swap: click a stone, then another.</span>';
     $('#keep').onclick = () => act({ kind: 'keep' });
   }
+  const wb = $('#wedge'); wb.disabled = !G.wedges; wb.onclick = useWedge;
 }
+function useWedge() {
+  if (!P || P.done || !G.wedges) return; G.wedges--; P.rem = Math.min(P.T, P.rem + 12); renderBar(); renderControls(); SFX.thud(); shake(.05); toast('🪵 Wedge jammed in! The walls groan to a stop… for now.');
+}
+function posOf(id) { return P.order.indexOf(+id); }
+function curVal(pos) { return P.vals[P.order[pos]]; }
+function hl(lines) { document.querySelectorAll('#code span').forEach(s => s.classList.toggle('on', lines.includes(+s.dataset.l))); }
 
 function renderStep() {
   const o = P.pz.ops[P.k], pz = P.pz, pr = $('#prompt');
-  $('#prog').style.width = (100 * P.k / pz.ops.length) + '%'; $('#mv').textContent = P.k + '/' + pz.ops.length;
+  $('#mv').textContent = P.k + '/' + pz.ops.length;
   if (!o) return;
   const V = x => '<span class="v">' + x + '</span>';
   if (o.t === 'cmp') { pr.innerHTML = 'Pass ' + (o.pass + 1) + ': compare A[' + o.a + '] = ' + V(curVal(o.a)) + ' and A[' + o.b + '] = ' + V(curVal(o.b)) + '. Swap them or leave them?'; hl([3]); }
   if (o.t === 'place') { pr.innerHTML = 'Pass ' + (o.i + 1) + ': find the smallest value from index ' + o.i + ' to the end and put it in index ' + V(o.i) + '.'; hl([2, 3, 4, 5]); }
-  if (o.t === 'mid') { pr.innerHTML = 'LOW = ' + V(P.low) + ', HIGH = ' + V(P.high) + '. Pick up the MID block.'; hl([2]); }
-  if (o.t === 'cut') { pr.innerHTML = 'A[MID] = ' + V(curVal(o.mid)) + ' and the target is ' + V(pz.target) + '. Toss the part that can’t hold ' + pz.target + '.'; hl([3, 5, 6, 7]); }
+  if (o.t === 'mid') { pr.innerHTML = 'LOW = ' + V(P.low) + ', HIGH = ' + V(P.high) + '. Lift the MID stone.'; hl([2]); }
+  if (o.t === 'cut') { pr.innerHTML = 'A[MID] = ' + V(curVal(o.mid)) + ' and you’re looking for ' + V(pz.target) + '. Drop the part that can’t hold ' + pz.target + '.'; hl([3, 5, 6, 7]); }
   if (o.t === 'qcmp') {
-    if (o.j === o.lo) { toast('quicksort(' + o.lo + ', ' + o.hi + ') · pivot ' + curVal(o.hi)); }
+    if (o.j === o.lo) toast('quicksort(' + o.lo + ', ' + o.hi + ') · pivot ' + curVal(o.hi));
     pr.innerHTML = 'Pivot = ' + V(curVal(o.hi)) + '. J = ' + o.j + ': is ' + V(curVal(o.j)) + ' smaller than the pivot? If yes, swap it into index I + 1 = ' + V(o.i + 1) + '. If not, leave it.'; hl([8, 9, 10, 11]);
   }
   if (o.t === 'pivot') { pr.innerHTML = 'Scan done. Put the pivot ' + V(curVal(o.hi)) + ' right after the small zone, at index I + 1 = ' + V(o.to) + '.'; hl([12]); }
-  drawMarkers();
+  drawMarkers(); requestAnimationFrame(refit);
 }
 
-// ----- block interaction: drag onto another, or tap-tap -----
-function attachBlock(b) {
-  let start = null, dragging = false, overEl = null;
-  b.addEventListener('pointerdown', e => {
-    if (!P || P.done || P.busy || P.gone.has(posOf(b.dataset.id))) return;
-    if (P.kind === 'binary') return; // binary uses taps (click)
-    start = { x: e.clientX, y: e.clientY }; dragging = false; try { b.setPointerCapture(e.pointerId); } catch (er) {}
-  });
-  b.addEventListener('pointermove', e => {
-    if (!start) return;
-    const dx = e.clientX - start.x, dy = e.clientY - start.y;
-    if (!dragging && Math.hypot(dx, dy) > 8) { dragging = true; clearSel(); b.classList.add('drag', 'lift'); SFX.pick(); b.dataset.base = b.style.transform; }
-    if (dragging) {
-      b.style.transform = b.dataset.base.replace(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/, (m, x, y) => 'translate(' + (+x + dx) + 'px,' + (+y + dy - 14) + 'px) scale(1.08)');
-      const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest && el.closest('.blk');
-      if (overEl && overEl !== t) overEl.classList.remove('over');
-      overEl = t && t !== b && !t.classList.contains('drag') ? t : null; if (overEl) overEl.classList.add('over');
-    }
-  });
-  const end = () => {
-    if (!start) return; start = null;
-    if (dragging) {
-      dragging = false; b.classList.remove('drag', 'lift'); const t = overEl; if (overEl) overEl.classList.remove('over'); overEl = null;
-      b.dataset.justDragged = '1'; setTimeout(() => { delete b.dataset.justDragged; }, 60);
-      if (t) act({ kind: 'swap', a: +b.dataset.id, b: +t.dataset.id }); else layout();
-    }
-  };
-  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', () => { if (start) { start = null; dragging = false; b.classList.remove('drag', 'lift'); if (overEl) overEl.classList.remove('over'); overEl = null; layout(); } });
-  b.addEventListener('click', () => {
-    if (!P || P.done || P.busy || b.dataset.justDragged) return;
-    const id = +b.dataset.id, pos = posOf(id);
-    if (P.kind === 'binary') {
-      if (P.gone.has(pos)) return;
-      const o = P.pz.ops[P.k]; if (!o) return;
-      if (o.t === 'mid') act({ kind: 'pick', pos });
-      else if (o.t === 'cut') { if (pos < o.mid) act({ kind: 'cut', side: 'left' }); else if (pos > o.mid) act({ kind: 'cut', side: 'right' }); }
-      return;
-    }
-    if (P.sel === null) { P.sel = id; b.classList.add('lift'); SFX.pick(); layout(); }
-    else if (P.sel === id) clearSel();
-    else { const a = P.sel; clearSel(); act({ kind: 'swap', a, b: id }); }
-  });
+// floor glow zones and floating tags
+function drawMarkers() {
+  clearGroup(ROW.marks);
+  if (!P) return;
+  const o = P.pz.ops[P.k], s = ROW.size, z1 = s * .56 + 1.05, z2 = z1 + .48, z3 = z2 + .48, tight = ROW.n > 10;
+  const T = (a, b) => tight ? b : a;
+  const zone = (a, b, color, op = .3) => { if (a > b) return; const w = xAt(b) - xAt(a) + ROW.spacing, m = new THREE.Mesh(new THREE.PlaneGeometry(w, s * 1.5), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending }));
+    m.rotation.x = -Math.PI / 2; m.position.set((xAt(a) + xAt(b)) / 2, .215, 0); ROW.marks.add(m); };
+  const tag = (pos, text, bg, fg, z) => { const l = label(text, bg, fg, s * .34); l.position.set(xAt(pos), .3, z); ROW.marks.add(l); };
+  const top = (x, text, fg) => { const l = label(text, 'none', fg, s * .3); l.position.set(x, ROW.baseY + s * 1.25, -s * .7); ROW.marks.add(l); };
+  if (P.done) { if (P.kind === 'binary' && P.foundPos >= 0) zone(P.foundPos, P.foundPos, 0x4fe0a8, .5); return; }
+  if (P.kind === 'bubble' && o) { zone(o.a, o.b, 0xf0bf4c, .32); tag(o.a, 'J', '#f0bf4c', '#2a1a05', z1); tag(o.b, 'J+1', '#f0bf4c', '#2a1a05', z1); }
+  if (P.kind === 'selection' && o) { zone(o.i, ROW.n - 1, 0x52d3e0, .16); tag(o.i, 'I', '#52d3e0', '#032024', z1); top((xAt(o.i) + xAt(ROW.n - 1)) / 2, 'unsorted part', '#9fe6ee'); }
+  if (P.kind === 'binary') {
+    if (P.low <= P.high) { zone(P.low, P.high, 0x52d3e0, .2); tag(P.low, T('LOW', 'L'), '#52d3e0', '#032024', z1); tag(P.high, T('HIGH', 'H'), '#52d3e0', '#032024', P.high === P.low ? z2 : z1); }
+    if (P.picked && o) tag(o.mid, T('MID', 'M'), '#f0bf4c', '#2a1a05', (o.mid === P.low || o.mid === P.high) ? z3 : z2);
+  }
+  if (P.kind === 'quick' && o) {
+    zone(o.lo, o.hi, 0xc49bff, .14); top((xAt(o.lo) + xAt(o.hi)) / 2, 'quicksort(' + o.lo + ', ' + o.hi + ')', '#dcc6ff');
+    const i = o.t === 'qcmp' ? o.i : o.to - 1; if (i >= o.lo) zone(o.lo, i, 0x4fe0a8, .32);
+    tag(o.hi, T('★ pivot', '★'), '#c49bff', '#1e0f33', z1);
+    if (o.t === 'qcmp') { tag(o.j, 'J', '#f0bf4c', '#2a1a05', o.j === o.hi ? z2 : z1); tag(o.lo, 'I = ' + o.i, 'none', '#7af0c2', z3); }
+    else tag(o.to, 'I+1', '#4fe0a8', '#04251a', z2);
+  }
 }
-function clearSel() { if (P && P.sel !== null) { const e = $('#stage .blk[data-id="' + P.sel + '"]'); if (e) e.classList.remove('lift'); P.sel = null; layout(); } }
+
+// ----- picking stones -----
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let downAt = null, hoverId = -1;
+function pickAt(cx, cy) {
+  const r = canvas.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera); const hit = ray.intersectObjects(ROW.blocks.filter(m => m.visible), false)[0]; return hit ? hit.object.userData.id : -1;
+}
+canvas.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY }; if (G.screen === 'run') runPointerDown(e); });
+canvas.addEventListener('pointerup', e => {
+  if (G.screen === 'run') { runPointerUp(e); return; }
+  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 12) { downAt = null; return; } downAt = null;
+  if (G.screen !== 'play' || !P) return; const id = pickAt(e.clientX, e.clientY); if (id >= 0) { P.kbd = false; tapStone(id); }
+});
+canvas.addEventListener('pointermove', e => { if (G.screen !== 'play' || !P || e.pointerType === 'touch') return; hoverId = pickAt(e.clientX, e.clientY); canvas.style.cursor = hoverId >= 0 && !P.done ? 'pointer' : 'default'; });
+function tapStone(id) {
+  if (!P || P.done || P.busy) return; const pos = posOf(id); if (P.gone.has(pos)) return;
+  if (P.kind === 'binary') {
+    const o = P.pz.ops[P.k]; if (!o) return;
+    if (o.t === 'mid') act({ kind: 'pick', pos });
+    else if (o.t === 'cut') { if (pos < o.mid) act({ kind: 'cut', side: 'left' }); else if (pos > o.mid) act({ kind: 'cut', side: 'right' }); }
+    return;
+  }
+  if (P.sel === null) { P.sel = id; meshOf(id).userData.liftTarget = ROW.size * .75; SFX.pick(); }
+  else if (P.sel === id) { meshOf(id).userData.liftTarget = 0; P.sel = null; }
+  else { const a = P.sel; P.sel = null; act({ kind: 'swap', a, b: id }); }
+}
 window.addEventListener('keydown', e => {
-  if (G.screen !== 'play' || !P || P.done) return;
-  if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && P.kind !== 'binary' && !(e.target && e.target.tagName === 'INPUT')) { e.preventDefault(); act({ kind: 'keep' }); }
-  if (e.key === 'Escape') clearSel();
+  if (G.screen === 'run') { runKey(e); return; }
+  if (G.screen !== 'play' || !P || P.done || (e.target && e.target.tagName === 'INPUT')) return;
+  if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && P.kind !== 'binary') { e.preventDefault(); act({ kind: 'keep' }); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); P.kbd = true; P.cursor = clamp(P.cursor + (e.key === 'ArrowLeft' ? -1 : 1), 0, ROW.n - 1); }
+  if (e.key === 'Enter' && P.kbd) { e.preventDefault(); tapStone(P.order[P.cursor]); }
+  if (e.key === 'Escape' && P.sel !== null) { meshOf(P.sel).userData.liftTarget = 0; P.sel = null; }
 });
 
 // ----- judging a move -----
@@ -483,25 +586,17 @@ function matches(ex, a) {
 }
 function whyWrong(o, a) {
   const v = curVal;
-  if (o.t === 'cmp') {
-    if (a.kind === 'keep') return v(o.a) + ' > ' + v(o.b) + ', so the left one is bigger: swap them!';
-    if (!o.swap) return v(o.a) + ' < ' + v(o.b) + ' is already in order: leave them.';
-    return 'Bubble sort only swaps the two highlighted neighbours.';
-  }
-  if (o.t === 'place') {
-    if (a.kind === 'keep') return 'There’s a smaller value later on. Index ' + o.i + ' needs the smallest from index ' + o.i + ' onward.';
-    if (!o.swap) return v(o.i) + ' is already the smallest from index ' + o.i + ' onward: leave it.';
-    return 'Swap the smallest value from index ' + o.i + ' onward into index ' + o.i + '.';
-  }
+  if (o.t === 'cmp') { if (a.kind === 'keep') return v(o.a) + ' > ' + v(o.b) + ': the left one is bigger, so swap them!'; if (!o.swap) return v(o.a) + ' < ' + v(o.b) + ' is already in order: leave them.'; return 'Bubble sort only swaps the two marked neighbours.'; }
+  if (o.t === 'place') { if (a.kind === 'keep') return 'There’s a smaller value further along. Index ' + o.i + ' needs the smallest from index ' + o.i + ' onward.'; if (!o.swap) return v(o.i) + ' is already the smallest from index ' + o.i + ' onward: leave it.'; return 'Swap the smallest value from index ' + o.i + ' onward into index ' + o.i + '.'; }
   if (o.t === 'qcmp') {
     if (a.kind === 'keep' && o.small) return v(o.j) + ' < pivot ' + v(o.hi) + ', so it joins the small zone: swap it into index ' + (o.i + 1) + '.';
     if (a.kind === 'keep' || !o.small) return v(o.j) + ' > pivot ' + v(o.hi) + ', so it stays put: leave it.';
-    if (o.small && !o.swap) return v(o.j) + ' is already at index I + 1 = ' + (o.i + 1) + ', so it’s in the small zone without moving: leave it.';
+    if (!o.swap) return v(o.j) + ' is already at index I + 1 = ' + (o.i + 1) + ', so it joins the small zone without moving: leave it.';
     return 'Swap A[J] (' + v(o.j) + ') with A[I + 1] (index ' + (o.i + 1) + ').';
   }
   if (o.t === 'pivot') { if (a.kind === 'keep') return 'Swap the pivot into index I + 1 = ' + o.to + '.'; if (!o.swap) return 'The pivot is already at index I + 1: leave it.'; return 'The pivot goes to index I + 1 = ' + o.to + ', right after the small zone.'; }
   if (o.t === 'mid') return P.stepMiss >= 1 ? 'MID = (' + o.low + ' + ' + o.high + ') div 2 = ' + o.mid + '.' : 'That’s not MID. MID = (LOW + HIGH) div 2, rounded down.';
-  if (o.t === 'cut') return v(o.mid) + (v(o.mid) < P.pz.target ? ' < ' : ' > ') + P.pz.target + ', so the target can only be on the ' + (o.side === 'left' ? 'right' : 'left') + '. Toss the ' + o.side + ' part.';
+  if (o.t === 'cut') return v(o.mid) + (v(o.mid) < P.pz.target ? ' < ' : ' > ') + P.pz.target + ', so the target can only be on the ' + (o.side === 'left' ? 'right' : 'left') + '. Drop the ' + o.side + ' part.';
   return 'Not quite.';
 }
 function mult() { return G.streak >= 20 ? 3 : G.streak >= 10 ? 2 : G.streak >= 5 ? 1.5 : 1; }
@@ -510,235 +605,356 @@ async function act(a) {
   if (!P || P.done || P.busy) return;
   const o = P.pz.ops[P.k]; if (!o) return;
   if (P.kind === 'binary' && o.t === 'cut' && a.kind === 'pick') return;
-  clearHints();
-  const ex = expected(o);
-  if (!matches(ex, a)) { wrong(o, a); return; }
-  // correct
+  P.hint = null; const kb = $('#keep'); if (kb) kb.style.outline = ''; ['#tossL', '#tossR'].forEach(s => { const b = $(s); if (b) b.style.outline = ''; });
+  if (!matches(expected(o), a)) { wrong(o, a); return; }
   P.busy = true; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.moves++;
-  const pts = Math.round(10 * mult()); bumpScore(pts); SFX.good(G.streak);
+  const pts = Math.round(10 * mult()); bumpScore(pts); SFX.good(G.streak); P.rem = Math.min(P.T, P.rem + 1.6);
   $('#streak').textContent = G.streak + (mult() > 1 ? ' ×' + mult() : '');
   if (G.streak === 5 || G.streak === 10 || G.streak === 20) toast('🔥 Streak ' + G.streak + '! Multiplier ×' + mult());
   if (a.kind === 'swap') {
-    const p1 = posOf(a.a), p2 = posOf(a.b); [P.order[p1], P.order[p2]] = [P.order[p2], P.order[p1]];
-    layout(); sparksAt(p1); sparksAt(p2); popAt(p2, '+' + pts);
+    const p1 = posOf(a.a), p2 = posOf(a.b), ida = P.order[p1], idb = P.order[p2];
+    [P.order[p1], P.order[p2]] = [P.order[p2], P.order[p1]];
+    await swapAnim(ida, idb, p1, p2);
   } else if (a.kind === 'keep') {
     const ps = o.t === 'cmp' ? [o.a, o.b] : o.t === 'place' ? [o.i] : o.t === 'qcmp' ? [o.j] : [o.hi];
-    ps.forEach(p => { const e = blockAt(p); if (e) { e.classList.add('wobble'); setTimeout(() => e.classList.remove('wobble'), 500); } }); popAt(ps[0], '+' + pts);
+    await anim(.32, k => ps.forEach(p => { meshOf(P.order[p]).rotation.y = Math.sin(k * Math.PI * 2) * .18; }));
+    ps.forEach(p => { meshOf(P.order[p]).rotation.y = 0; });
   } else if (a.kind === 'pick') {
-    P.picked = true; const e = blockAt(o.mid); e.classList.add('lift'); layout();
-    const v = curVal(o.mid), t = P.pz.target, cmp = document.createElement('span'); cmp.className = 'cmpb'; cmp.textContent = v === t ? v + ' = ' + t + ' 🎯' : v + (v < t ? ' < ' : ' > ') + t; e.appendChild(cmp);
-    popAt(o.mid, '+' + pts);
-    const tl = $('#tossL'), tr = $('#tossR'); if (tl) { tl.disabled = false; tr.disabled = false; } if ($('#bnote')) $('#bnote').textContent = 'Toss a part, or tap a block on that side.';
+    P.picked = true; const m = meshOf(P.order[o.mid]); m.userData.liftTarget = ROW.size * 1.0; SFX.pick();
+    const v = curVal(o.mid), t = P.pz.target, l = label(v === t ? v + ' = ' + t + ' !' : v + (v < t ? ' < ' : ' > ') + t, '#f0bf4c', '#2a1a05', ROW.size * .4);
+    l.position.set(0, ROW.size * 1.05, 0); l.name = 'cmp'; m.add(l);
+    const tl = $('#tossL'), tr = $('#tossR'); if (tl) { tl.disabled = false; tr.disabled = false; } if ($('#bnote')) $('#bnote').textContent = 'Drop a part, or click a stone on that side.';
+    await sleep(reduceMotion ? 50 : 280);
   } else if (a.kind === 'cut') {
-    const e = blockAt(o.mid); e.classList.remove('lift'); const c = e.querySelector('.cmpb'); if (c) c.remove();
+    const mm = meshOf(P.order[o.mid]), cl = mm.getObjectByName('cmp'); if (cl) mm.remove(cl); mm.userData.liftTarget = 0;
     const from = o.side === 'left' ? P.low : o.mid, to = o.side === 'left' ? o.mid : P.high;
     for (let p = from; p <= to; p++) P.gone.add(p);
     if (o.side === 'left') P.low = o.mid + 1; else P.high = o.mid - 1;
-    P.picked = false; SFX.thud(); layout();
-    for (let p = from; p <= to; p++) blockAt(p).classList.add('gone');
-    const tl = $('#tossL'), tr = $('#tossR'); if (tl) { tl.disabled = true; tr.disabled = true; } if ($('#bnote')) $('#bnote').textContent = 'Tap the MID block next.';
+    P.picked = false; SFX.fall(); const ms = []; for (let p = from; p <= to; p++) { const m = meshOf(P.order[p]); m.userData.tw = true; ms.push(m); ROW.plinths[p].material.color.setHex(0x120b05); }
+    const y0 = ms.map(m => m.position.y), rx = ms.map(() => (Math.random() - .5) * 2);
+    drawMarkers();
+    await anim(.7, k => ms.forEach((m, i) => { m.position.y = y0[i] - k * k * 7; m.rotation.x = rx[i] * k; m.rotation.z = -rx[i] * k * .6; }));
+    ms.forEach(m => { m.visible = false; });
+    const tl = $('#tossL'), tr = $('#tossR'); if (tl) { tl.disabled = true; tr.disabled = true; } if ($('#bnote')) $('#bnote').textContent = 'Click the MID stone next.';
   }
   P.stepMiss = 0; P.k++;
-  // locks after a step
   const next = P.pz.ops[P.k];
   if (P.kind === 'bubble' && (!next || next.pass !== o.pass)) {
-    const n = P.vals.length;
+    const n = ROW.n;
     if (!next) { for (let p = 0; p < n; p++) lock(p); if (!P.pz.ops.filter(x => x.pass === o.pass).some(x => x.swap)) toast('No swaps that pass, so it’s sorted. Stop!'); }
     else { lock(n - 1 - o.pass); toast('Pass ' + (o.pass + 1) + ' done: ' + curVal(n - 1 - o.pass) + ' bubbled to the end'); }
   }
   if (P.kind === 'selection') { lock(o.i); if (!next) lock(o.i + 1); }
   if (P.kind === 'quick' && o.t === 'pivot') {
-    lock(o.to);
-    // sections of size 0 or 1 are already final
-    for (let p = 0; p < P.vals.length; p++) if (!P.locked.has(p) && !pendingSection(p)) lock(p, true);
+    lock(o.to); for (let p = 0; p < ROW.n; p++) if (!P.locked.has(p) && !pendingSection(p)) lock(p, true);
     if (next) toast('Pivot ' + curVal(o.to) + ' is home at index ' + o.to + '. Next: quicksort(' + next.lo + ', ' + next.hi + ')');
   }
-  await sleep(reduceMotion ? 60 : 230);
   P.busy = false;
+  if (P.done) return;
   if (P.k >= P.pz.ops.length) { finishPuzzle(); return; }
   renderStep();
 }
-// is position p inside a section that still needs a partition?
 function pendingSection(p) { for (let k = P.k; k < P.pz.ops.length; k++) { const o = P.pz.ops[k]; if (p >= o.lo && p <= o.hi) return true; } return false; }
-function lock(p, quiet) { if (P.locked.has(p)) return; P.locked.add(p); const e = blockAt(p); if (e) e.classList.add('locked'); if (!quiet) SFX.lock(); }
-
+function lock(p, quiet) { if (P.locked.has(p)) return; P.locked.add(p); if (!quiet) SFX.lock(); }
 function wrong(o, a) {
   const why = whyWrong(o, a);
-  G.streak = 0; G.mistakes++; P.miss++; P.stepMiss++; bumpScore(-15); SFX.bad();
+  G.streak = 0; G.mistakes++; P.miss++; P.stepMiss++; bumpScore(-15); SFX.bad(); SFX.rumble(); shake(.18); dustBoost = 1.2;
+  P.rem = Math.max(0, P.rem - 6);
   $('#streak').textContent = '0'; $('#miss').textContent = P.miss;
-  const st = $('#stage'); st.classList.remove('shake'); void st.offsetWidth; st.classList.add('shake');
-  const mini = $('#mini'); if (mini) { mini.innerHTML = staticSVG('laugh', 54); mini.classList.add('wobble'); setTimeout(() => { mini.classList.remove('wobble'); if ($('#mini')) mini.innerHTML = staticSVG('idle', 54); }, 900); }
-  toast(why, true);
-  if (a.kind === 'swap') layout();
-  if (P.stepMiss >= 2) showHint(o);
-}
-function showHint(o) {
-  const ex = expected(o);
-  if (ex.kind === 'swap') ex.p.forEach(p => blockAt(p).classList.add('hint'));
-  if (ex.kind === 'pick') blockAt(ex.pos).classList.add('hint');
-  if (ex.kind === 'keep') { const k = $('#keep'); if (k) k.style.boxShadow = '0 4px 0 #b38d10, 0 0 0 4px var(--hot)'; }
-  if (ex.kind === 'cut') { const b = ex.side === 'left' ? $('#tossL') : $('#tossR'); if (b) b.style.outline = '4px solid var(--volt)'; }
-}
-function clearHints() { document.querySelectorAll('.blk.hint').forEach(e => e.classList.remove('hint')); const k = $('#keep'); if (k) k.style.boxShadow = ''; ['#tossL', '#tossR'].forEach(s => { const b = $(s); if (b) b.style.outline = ''; }); }
-
-function toast(text, bad) { const st = $('#stage'); if (!st) return; st.querySelectorAll('.toast').forEach(t => t.remove()); const t = document.createElement('div'); t.className = 'toast' + (bad ? ' bad' : ''); t.textContent = text; t.title = text; st.appendChild(t); setTimeout(() => t.remove(), 1900); }
-function popAt(pos, text) { const g = geom(), st = $('#stage'), d = document.createElement('div'); d.className = 'pop'; d.textContent = text; d.style.left = (g.xAt(pos) + g.bw / 2 - 14) + 'px'; d.style.top = (g.y0 - 40) + 'px'; st.appendChild(d); setTimeout(() => d.remove(), 1000); }
-function sparksAt(pos) {
-  if (reduceMotion) return; const g = geom(), st = $('#stage'), cols = ['#ffd23f', '#4de1ff', '#3dffb5', '#ff5c8a'];
-  for (let k = 0; k < 8; k++) { const s = document.createElement('div'); s.className = 'spark'; const ang = Math.PI * 2 * k / 8 + Math.random(), d = 26 + Math.random() * 22;
-    s.style.cssText = 'left:' + (g.xAt(pos) + g.bw / 2) + 'px;top:' + (g.y0 + g.bw / 2) + 'px;background:' + cols[k % 4] + ';--dx:' + (Math.cos(ang) * d) + 'px;--dy:' + (Math.sin(ang) * d) + 'px'; st.appendChild(s); setTimeout(() => s.remove(), 650); }
+  toast(why + '  The walls lurch in!', true);
+  if (a.kind === 'swap') [a.a, a.b].forEach(id => { meshOf(id).userData.liftTarget = 0; });
+  if (P.stepMiss >= 2) {
+    const ex = expected(o);
+    if (ex.kind === 'swap') P.hint = ex.p.map(p => P.order[p]);
+    if (ex.kind === 'pick') P.hint = [P.order[ex.pos]];
+    if (ex.kind === 'keep') { const k = $('#keep'); if (k) k.style.outline = '4px solid var(--gold)'; }
+    if (ex.kind === 'cut') { const b = ex.side === 'left' ? $('#tossL') : $('#tossR'); if (b) b.style.outline = '4px solid var(--gold)'; }
+  }
 }
 
-// ----- Static's fuzz attacks -----
-function scheduleAmbush() {
-  clearTimeout(P.ambT); const lo = P.ambush === 2 ? 9000 : 14000, hi = P.ambush === 2 ? 16000 : 24000;
-  const me = P; P.ambT = setTimeout(() => { if (P === me && !P.done && G.screen === 'play') ambush(); }, lo + Math.random() * (hi - lo));
-}
-function ambush() {
-  const st = $('#stage'); if (!st || P.villain) return;
-  P.villain = true; const g = geom(), size = 70, fuseMs = P.ambush === 2 ? 2800 : 3400;
-  const v = document.createElement('button'); v.type = 'button'; v.className = 'villain'; v.setAttribute('aria-label', 'Zap Static');
-  const x = 12 + Math.random() * (g.W - size - 24), y = Math.random() < .5 ? 8 : g.H - size - 8;
-  v.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + size + 'px;height:' + size + 'px';
-  const C = 2 * Math.PI * 40;
-  v.innerHTML = staticSVG('laugh', size) + '<svg class="fuse" viewBox="0 0 90 90" width="' + (size + 12) + '" height="' + (size + 12) + '"><circle cx="45" cy="45" r="40" fill="none" stroke="#ff5c8a" stroke-width="5" stroke-dasharray="' + C + '" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 45 45)"><animate attributeName="stroke-dashoffset" from="0" to="' + C + '" dur="' + fuseMs + 'ms" fill="freeze"/></circle></svg>';
-  st.appendChild(v); tone(660, .12, 'square', .03, -200);
-  const me = P;
-  const timer = setTimeout(() => {
-    if (P !== me || !v.isConnected) return; v.remove(); P.villain = false;
-    if (G.shields > 0) { G.shields--; renderBar(); toast('🛡️ Shield blocked Static’s fuzz!'); }
-    else { st.classList.add('fuzz'); SFX.fuzz(); toast('Static fuzzed your blocks! Remember where they were…', true); clearTimeout(P.fuzzT); P.fuzzT = setTimeout(() => { if (P === me) st.classList.remove('fuzz'); }, 5500); }
-    scheduleAmbush();
-  }, fuseMs);
-  v.onclick = e => { e.stopPropagation(); clearTimeout(timer); v.innerHTML = staticSVG('hurt', size); SFX.zap(8); bumpScore(40); toast('⚡ Zapped Static! +40'); P.villain = false; setTimeout(() => v.remove(), 450); scheduleAmbush(); };
+// ----- crushed -----
+async function crushed() {
+  P.done = true; P.crushed = true; G.streak = 0; G.crushes++; bumpScore(-100); SFX.rumble(); SFX.thud(); shake(.35); dustBoost = 2;
+  if (P.sel !== null) { meshOf(P.sel).userData.liftTarget = 0; P.sel = null; }
+  toast('💥 CRUSHED! The walls closed in.', true);
+  await sleep(1100);
+  if (G.screen !== 'play') return;
+  setScreen('play', '<div class="center"><div class="panel pe" style="text-align:center"><div class="kicker" style="color:var(--ruby)">The walls won this time</div><h2 style="font-size:32px;margin:6px 0 10px">Crushed!</h2>' +
+    '<p class="sub">−100 points. The temple resets the room with a fresh row of stones. Tip: every correct move shoves the walls back, and a 🪵 wedge buys 12 seconds.</p>' +
+    '<button class="btn" id="retry" type="button">Try a new row</button></div></div>');
+  $('#retry').onclick = () => startPuzzle();
 }
 
-// ----- puzzle complete -----
+// ----- row complete -----
 function finishPuzzle() {
-  P.done = true; clearTimeout(P.ambT); clearTimeout(P.fuzzT); const st = $('#stage'); st.classList.remove('fuzz'); st.querySelectorAll('.villain').forEach(v => v.remove());
-  const pz = P.pz, secs = Math.round((Date.now() - P.t0) / 1000), par = pz.ops.length * 4, tb = Math.max(0, par - secs) * 3, perfect = P.miss === 0;
+  P.done = true; const pz = P.pz, perfect = P.miss === 0, tb = Math.round(P.rem * 3);
   const bonus = 100 + tb + (perfect ? 100 : 0); bumpScore(bonus); G.puzzlesDone++; if (perfect) G.perfect++;
-  $('#prog').style.width = '100%'; $('#mv').textContent = pz.ops.length + '/' + pz.ops.length; SFX.win();
-  if (pz.kind === 'binary') { if (pz.found >= 0) { blockAt(pz.found).classList.add('found'); hl([4]); } else hl([8]); }
+  $('#mv').textContent = pz.ops.length + '/' + pz.ops.length; SFX.win();
+  if (pz.kind === 'binary') { if (pz.found >= 0) { P.foundPos = pz.found; const fm = meshOf(P.order[pz.found]); fm.userData.liftTarget = ROW.size * 1.3; fm.userData.spin = 1; hl([4]); } else hl([8]); }
+  else for (let p = 0; p < ROW.n; p++) lock(p, true);
   drawMarkers();
-  $('#prompt').innerHTML = pz.kind === 'binary' ? (pz.found >= 0 ? 'Found ' + pz.target + ' at index ' + pz.found + '. return ' + pz.found : 'LOW > HIGH, so ' + pz.target + ' isn’t in the array. return -1') : 'Sorted! Every block is locked in.';
+  $('#prompt').innerHTML = pz.kind === 'binary' ? (pz.found >= 0 ? 'Found ' + pz.target + ' at index ' + pz.found + '. return ' + pz.found : 'LOW > HIGH, so ' + pz.target + ' isn’t here. return -1') : 'Sorted! The walls grind back open.';
   let fact = pz.bigO;
   if (pz.kind === 'binary') fact = (pz.found >= 0 ? 'Found ' + pz.target + ' at index ' + pz.found + ' in ' + pz.comparisons + ' comparisons. Linear search would have needed ' + pz.linear + '. '
     : pz.target + ' isn’t here: LOW passed HIGH after ' + pz.comparisons + ' comparisons, so it returns -1. Linear search would have checked all ' + pz.linear + '. ') + pz.bigO;
   if (pz.kind === 'bubble') { const passes = new Set(pz.ops.map(o => o.pass)).size; fact = passes + ' passes, ' + pz.ops.length + ' comparisons, ' + pz.ops.filter(o => o.swap).length + ' swaps. ' + pz.bigO; }
   if (pz.kind === 'selection') fact = (pz.start.length - 1) + ' passes, ' + pz.ops.filter(o => o.swap).length + ' swaps. ' + pz.bigO;
   if (pz.kind === 'quick') fact = pz.calls + ' partition calls, ' + pz.ops.filter(o => o.t === 'qcmp').length + ' comparisons with a pivot. ' + pz.bigO;
-  const C = CIRCUITS[G.mode][G.circuit], last = G.pIndex === C.puzzles.length - 1;
-  const ov = document.createElement('div'); ov.className = 'overlay';
-  ov.innerHTML = '<div style="max-width:560px;text-align:center"><div class="kicker">' + (perfect ? 'Flawless' : 'Circuit restored') + '</div><h2 style="font-size:30px;margin:6px 0 8px">' + (perfect ? '✨ Perfect run!' : pz.kind === 'binary' ? (pz.found >= 0 ? '🎯 Found it!' : '🚫 Proved it’s not there!') : '✅ Sorted it out!') + '</h2>' +
-    '<p class="note" style="font-size:15px">' + esc(fact) + '</p>' +
-    '<div class="row" style="justify-content:center;margin:10px 0 14px"><span class="chip">Finish <b>+100</b></span><span class="chip">Speed <b>+' + tb + '</b></span>' + (perfect ? '<span class="chip">No mistakes <b>+100</b></span>' : '<span class="chip">Mistakes <b style="color:var(--bad)">' + P.miss + '</b></span>') + '</div>' +
-    '<button class="btn" id="next" type="button">' + (last ? (G.circuit < 4 ? 'On to Static Smash ⚡' : 'See final score 🏁') : 'Next array ➜') + '</button></div>';
-  setTimeout(() => { st.appendChild(ov); $('#next').focus(); $('#next').onclick = () => {
-    if (!last) { G.pIndex++; startPuzzle(); return; }
-    netPush('c' + Math.min(5, G.circuit + 2));
-    if (G.circuit < 4) smashIntro(); else endScreen();
-  }; }, reduceMotion ? 100 : 700);
-  netPush('c' + (G.circuit + 1));
+  const C = CHAMBERS[G.mode][G.chamber], last = G.pIndex === C.puzzles.length - 1, me = P;
+  netPush('c' + (G.chamber + 1));
+  setTimeout(() => {
+    if (G.screen !== 'play' || P !== me) return;
+    const box = document.createElement('div'); box.className = 'center';
+    box.innerHTML = '<div class="panel pe" style="text-align:center"><div class="kicker">' + (perfect ? 'Flawless' : 'Room cleared') + '</div><h2 style="font-size:30px;margin:6px 0 8px;color:var(--gold)">' +
+      (perfect ? '✨ Perfect run!' : pz.kind === 'binary' ? (pz.found >= 0 ? '🎯 Found it!' : '🚫 Proved it’s not here!') : '✅ Sorted!') + '</h2>' +
+      '<p class="note" style="font-size:15px">' + esc(fact) + '</p>' +
+      '<div class="row" style="justify-content:center;margin:10px 0 14px"><span class="chip">Cleared <b>+100</b></span><span class="chip">Walls left <b>+' + tb + '</b></span>' + (perfect ? '<span class="chip">No mistakes <b>+100</b></span>' : '<span class="chip">Mistakes <b style="color:var(--ruby)">' + P.miss + '</b></span>') + '</div>' +
+      '<button class="btn" id="next" type="button">' + (last ? (G.chamber < 4 ? 'Leave the chamber… run!' : 'Claim the idol 🏆') : 'Next row ➜') + '</button></div>';
+    $('#screen').querySelectorAll('.ptop,.pbot,.streak,.pcode').forEach(e => e.style.display = 'none');
+    $('#screen').appendChild(box); $('#next').focus();
+    $('#next').onclick = () => { if (!last) { G.pIndex++; startPuzzle(); return; } netPush('c' + Math.min(5, G.chamber + 2)); if (G.chamber < 4) runIntro(); else endScreen(); };
+  }, reduceMotion ? 200 : 1300);
 }
 
-// ================= Static Smash (the mindless bit) =================
-function smashIntro() {
-  setScreen('smash', '<div class="grid2"><div class="card"><div class="kicker">Between circuits</div><h2 style="font-size:36px;margin:6px 0 10px">⚡ Static Smash</h2>' +
-    '<p class="sub">Static escaped into the circuit board. Tap him to zap him. Every zap splits him into two smaller, faster Statics, so keep tapping. Zap fast to build your combo.</p>' +
-    '<div class="rule"><b>Every 15 zaps = 1 shield</b> (max 3). A shield blocks one of Static’s fuzz attacks later. You have ' + G.shields + ' right now.</div>' +
-    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Smash! (20 seconds)</button></div></div>' +
-    '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG('laugh', 190) + '</div><p class="note">“You’ll never catch all of me!”</p></div></div>');
-  $('#go').onclick = smash;
+// ================= Boulder run (the mindless bit) =================
+const run = new THREE.Scene(); run.background = new THREE.Color(0x0b0704); run.fog = new THREE.Fog(0x0b0704, 14, 60);
+const runCam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .1, 120);
+run.add(new THREE.HemisphereLight(0xe2c79b, 0x24170a, .9));
+const runSun = new THREE.DirectionalLight(0xffe2b0, 1.4); runSun.position.set(-3, 10, 6); run.add(runSun);
+const runTorch = new THREE.PointLight(0xff9a40, 12, 22, 1.5); runTorch.position.set(0, 3, 1); run.add(runTorch);
+const SEG = 10, NSEG = 8, LANES = [-1.7, 0, 1.7];
+const runFloorMat = new THREE.MeshStandardMaterial({ map: tex(floorCanvas(), 2, 2.5), roughness: .92 });
+const runWallMat = new THREE.MeshStandardMaterial({ map: tex(brickCanvas([116, 90, 62]), 2.5, 1), roughness: .92 });
+const pillarMat = new THREE.MeshStandardMaterial({ color: 0x7a6044, roughness: .9 });
+const segs = [];
+for (let s = 0; s < NSEG; s++) {
+  const g = new THREE.Group();
+  const f = new THREE.Mesh(new THREE.BoxGeometry(6.2, .3, SEG), runFloorMat); f.position.y = -.15; g.add(f);
+  for (const sx of [-1, 1]) {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(.6, 4.6, SEG), runWallMat); w.position.set(sx * 3.4, 2.3, 0); g.add(w);
+    const p = new THREE.Mesh(new THREE.BoxGeometry(.8, 4.8, .8), pillarMat); p.position.set(sx * 3.0, 2.4, -SEG / 2 + .4); g.add(p);
+    if (s % 2 === 0) { const fl = new THREE.Mesh(new THREE.ConeGeometry(.13, .4, 8), new THREE.MeshBasicMaterial({ color: 0xffa640 })); fl.position.set(sx * 2.55, 3.1, -SEG / 2 + .4); g.add(fl);
+      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); gl.scale.set(1.6, 1.6, 1); gl.position.copy(fl.position); g.add(gl); }
+  }
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(6.8, .6, .8), pillarMat); beam.position.set(0, 4.9, -SEG / 2 + .4); g.add(beam);
+  g.position.z = -s * SEG + 4; run.add(g); segs.push(g);
 }
-function smash() {
-  setScreen('smash', '<div class="smash-wrap"><canvas id="smash"></canvas><div class="smash-hud"><span class="chip">⏱ <b id="sT">20</b></span><span class="chip">Zaps <b id="sZ">0</b></span><span class="chip">Combo <b id="sC">×1</b></span><span class="chip">🛡️ <b id="sS">' + G.shields + '</b></span></div></div><p class="note" style="text-align:center;margin-top:8px">Tap the Statics. Big ones split, tiny ones pop.</p>');
-  const cv = $('#smash'), ctx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1);
-  let W = 0, H = 0;
-  const resize = () => { const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawBoard(); };
-  // circuit board background, drawn once
-  const bg = document.createElement('canvas'), bctx = bg.getContext('2d');
-  function drawBoard() {
-    bg.width = W * dpr; bg.height = H * dpr; bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    bctx.fillStyle = '#0c2a24'; bctx.fillRect(0, 0, W, H);
-    bctx.strokeStyle = 'rgba(184,146,44,.45)'; bctx.lineWidth = 3; bctx.lineCap = 'round';
-    for (let k = 0; k < 26; k++) { let x = Math.random() * W, y = Math.random() * H; bctx.beginPath(); bctx.moveTo(x, y);
-      for (let s = 0; s < 4; s++) { if (Math.random() < .5) x += (Math.random() < .5 ? -1 : 1) * (40 + Math.random() * 120); else y += (Math.random() < .5 ? -1 : 1) * (40 + Math.random() * 100); bctx.lineTo(x, y); }
-      bctx.stroke(); bctx.fillStyle = 'rgba(184,146,44,.7)'; bctx.beginPath(); bctx.arc(x, y, 5, 0, 7); bctx.fill(); }
-    bctx.fillStyle = 'rgba(16,58,50,.9)'; for (let k = 0; k < 6; k++) { const x = Math.random() * (W - 90), y = Math.random() * (H - 50); bctx.fillRect(x, y, 70 + Math.random() * 40, 34); }
+function makeExplorer() {
+  const g = new THREE.Group(), skin = new THREE.MeshStandardMaterial({ color: 0xe0b48a, roughness: .7 }), shirt = new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: .8 }),
+    pants = new THREE.MeshStandardMaterial({ color: 0x5b4127, roughness: .8 }), hat = new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: .7 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(.28, .5, 4, 10), shirt); body.position.y = 1.05; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.23, 16, 12), skin); head.position.y = 1.65; g.add(head);
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(.42, .42, .04, 20), hat); brim.position.y = 1.8; g.add(brim);
+  const crown = new THREE.Mesh(new THREE.CylinderGeometry(.2, .25, .22, 16), hat); crown.position.y = 1.92; g.add(crown);
+  const bag = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, .12), hat); bag.position.set(.3, .9, 0); g.add(bag);
+  const legs = [], arms = [];
+  for (const sx of [-1, 1]) {
+    const l = new THREE.Mesh(new THREE.BoxGeometry(.16, .6, .18), pants); l.geometry.translate(0, -.3, 0); l.position.set(sx * .13, .72, 0); g.add(l); legs.push(l);
+    const a = new THREE.Mesh(new THREE.BoxGeometry(.12, .5, .14), shirt); a.geometry.translate(0, -.25, 0); a.position.set(sx * .38, 1.3, 0); g.add(a); arms.push(a);
   }
-  resize();
-  const speedK = reduceMotion ? .45 : 1;
-  const mk = (x, y, r) => { const a = Math.random() * 7, sp = (90 + (46 - r) * 7) * speedK; return { x, y, r, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: Math.random() * 7, hurt: 0 }; };
-  let foes = [mk(W / 2, H / 2, 46)], parts = [], floats = [], zaps = 0, combo = 0, bestCombo = 0, lastZap = 0, pts = 0, timeLeft = 20, waves = 0, running = true, last = performance.now();
-  const shieldsStart = G.shields;
-  window.SC.foes = () => foes.map(f => ({ x: f.x, y: f.y, r: f.r }));
-  function drawStatic(f) {
-    const { x, y, r } = f, N = 12; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(f.t * 3) * .15);
-    ctx.beginPath(); for (let k = 0; k < N * 2; k++) { const a = Math.PI * k / N, rr = k % 2 ? r * .78 : r; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath();
-    ctx.fillStyle = f.hurt > 0 ? '#c9b3ff' : '#7d4dff'; ctx.fill(); ctx.lineWidth = Math.max(2, r * .08); ctx.strokeStyle = '#1a0b33'; ctx.stroke();
-    ctx.fillStyle = '#9b72ff'; ctx.beginPath(); ctx.arc(0, 0, r * .62, 0, 7); ctx.fill();
-    const er = r * .2; ctx.fillStyle = '#f4f0ff'; ctx.beginPath(); ctx.arc(-r * .28, -r * .1, er, 0, 7); ctx.arc(r * .28, -r * .1, er, 0, 7); ctx.fill();
-    ctx.fillStyle = '#1a0b33'; ctx.beginPath(); ctx.arc(-r * .28 + Math.sign(f.vx) * er * .3, -r * .07, er * .5, 0, 7); ctx.arc(r * .28 + Math.sign(f.vx) * er * .3, -r * .07, er * .5, 0, 7); ctx.fill();
-    ctx.strokeStyle = '#1a0b33'; ctx.lineWidth = Math.max(1.5, r * .07); ctx.beginPath(); ctx.arc(0, r * .2, r * .3, .2, Math.PI - .2); ctx.stroke(); ctx.restore();
+  g.userData = { legs, arms, mats: [skin, shirt, pants, hat] }; return g;
+}
+const explorer = makeExplorer(); run.add(explorer);
+const boulderC = cnv(256, 256); { const x = boulderC[1]; x.fillStyle = '#6f5a43'; x.fillRect(0, 0, 256, 256); speckle(x, 256, 256, 1600, .35, .15); x.strokeStyle = 'rgba(30,20,10,.6)'; x.lineWidth = 3; for (let k = 0; k < 9; k++) { x.beginPath(); x.moveTo(Math.random() * 256, Math.random() * 256); for (let s = 0; s < 4; s++) x.lineTo(Math.random() * 256, Math.random() * 256); x.stroke(); } }
+const boulder = new THREE.Mesh(new THREE.SphereGeometry(2.3, 28, 20), new THREE.MeshStandardMaterial({ map: tex(boulderC[0], 2, 1), roughness: 1 })); boulder.position.set(0, 2.3, 11); run.add(boulder);
+const coinGeo = new THREE.CylinderGeometry(.32, .32, .08, 20), coinMat = new THREE.MeshStandardMaterial({ color: 0xffc53d, metalness: .8, roughness: .3, emissive: 0x6b4a00, emissiveIntensity: .6 });
+const stoneGeo = new THREE.BoxGeometry(1.35, 1.7, .9), stoneMat = new THREE.MeshStandardMaterial({ map: tex(brickCanvas([130, 104, 74]), .5, .5), roughness: .9 });
+const logGeo = new THREE.CylinderGeometry(.3, .3, 1.45, 12), logMat = new THREE.MeshStandardMaterial({ color: 0x8a6a48, roughness: .9 });
+const pitGeo = new THREE.BoxGeometry(1.5, .05, 1.7), pitMat = new THREE.MeshBasicMaterial({ color: 0x050302 });
+const R = { on: false, objs: [] };
+function runIntro() {
+  activeScene = 'temple'; P = null;
+  setScreen('runIntro', '<div class="center"><div class="panel pe"><div class="kicker">Between chambers</div><h2 style="font-size:34px;margin:6px 0 10px;color:var(--gold)">🪨 RUN!</h2>' +
+    '<p class="sub">You pried the door open, and the temple let loose a boulder. Survive 25 seconds. Switch lanes to dodge stones, jump logs and pits, and grab the gold. Every stumble lets the boulder roll closer. Three and it flattens you.</p>' +
+    '<div class="rule"><b>Controls:</b> ← → (or A D) switch lanes, ↑ or space jumps. Touchscreen or trackpad: swipe, or tap the left / middle / right of the screen.</div>' +
+    '<div class="rule"><b>Every 12 coins = 🪵 1 wedge</b> (max 3). Wedges jam the chamber walls and buy you 12 seconds. You have ' + G.wedges + '.</div>' +
+    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Run! 🏃</button></div></div></div>');
+  $('#go').onclick = startRun;
+}
+function startRun() {
+  activeScene = 'run'; runCam.aspect = innerWidth / innerHeight; runCam.updateProjectionMatrix();
+  setScreen('run', '<div class="runhud"><span class="chip">⏱ <b id="rT">25</b></span><span class="chip">🪙 <b id="rC">0</b></span><span class="chip">Combo <b id="rK">×1</b></span><span class="chip">🪵 <b id="rW">' + G.wedges + '</b></span><span class="chip">Stumbles <b class="hearts" id="rH">○○○</b></span></div>' +
+    '<div class="runpad"><button class="btn wood pe" id="bL" type="button" aria-label="Left">◀</button><button class="btn pe" id="bJ" type="button" aria-label="Jump">⤒</button><button class="btn wood pe" id="bR" type="button" aria-label="Right">▶</button></div>');
+  ['bL', 'bJ', 'bR'].forEach((id, i) => { $('#' + id).onpointerdown = e => { e.preventDefault(); e.stopPropagation(); runInput(['left', 'jump', 'right'][i]); }; });
+  for (const o of R.objs) run.remove(o.mesh);
+  Object.assign(R, { on: true, t: 0, dur: 25, speed: 11, lane: 1, x: 0, y: 0, vy: 0, objs: [], farZ: 0, coins: 0, combo: 0, bestCombo: 0, hits: 0, inv: 0, boulderZ: 11, boulderGoal: 11, pts: 0, wedgesStart: G.wedges, ended: false, phase: 0 });
+  segs.forEach((g, s) => { g.position.z = -s * SEG + 4; });
+  explorer.position.set(0, 0, 0); explorer.rotation.set(0, Math.PI, 0); boulder.position.set(0, 2.3, 11);
+  for (let z = -24; z >= -68; z -= 11) { spawnRow(z); R.farZ = z; }
+}
+function spawnRow(z) {
+  const lanes = E.shuffle([0, 1, 2]), blocked = Math.random() < .45 && R.t > 4 ? 2 : 1, free = lanes.slice(blocked);
+  for (const ln of lanes.slice(0, blocked)) {
+    const r = Math.random(), type = r < .4 ? 'stone' : r < .72 ? 'log' : 'pit';
+    let mesh;
+    if (type === 'stone') { mesh = new THREE.Mesh(stoneGeo, stoneMat); mesh.position.y = .85; }
+    if (type === 'log') { mesh = new THREE.Mesh(logGeo, logMat); mesh.rotation.z = Math.PI / 2; mesh.position.y = .3; }
+    if (type === 'pit') { mesh = new THREE.Mesh(pitGeo, pitMat); mesh.position.y = .03; }
+    mesh.position.x = LANES[ln]; mesh.position.z = z; run.add(mesh); R.objs.push({ kind: type, lane: ln, mesh, done: false });
   }
-  function frame(now) {
-    if (!running) return; const dt = Math.min(.05, (now - last) / 1000); last = now;
-    timeLeft -= dt; if (timeLeft <= 0) { running = false; return smashDone(); }
-    if (combo && now - lastZap > 1300) { combo = 0; $('#sC').textContent = '×1'; }
-    for (const f of foes) { f.t += dt; f.hurt -= dt; f.x += f.vx * dt; f.y += f.vy * dt;
-      if (f.x < f.r) { f.x = f.r; f.vx = Math.abs(f.vx); } if (f.x > W - f.r) { f.x = W - f.r; f.vx = -Math.abs(f.vx); }
-      if (f.y < f.r) { f.y = f.r; f.vy = Math.abs(f.vy); } if (f.y > H - f.r) { f.y = H - f.r; f.vy = -Math.abs(f.vy); }
-      if (Math.random() < dt * .8) { const a = Math.atan2(f.vy, f.vx) + (Math.random() - .5) * 1.2, sp = Math.hypot(f.vx, f.vy); f.vx = Math.cos(a) * sp; f.vy = Math.sin(a) * sp; } }
-    parts = parts.filter(p => (p.life -= dt) > 0); floats = floats.filter(p => (p.life -= dt) > 0);
-    ctx.drawImage(bg, 0, 0, W, H);
-    for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .92; p.vy *= .92; ctx.globalAlpha = Math.max(0, p.life / .5); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 7); ctx.fill(); }
-    ctx.globalAlpha = 1; foes.forEach(drawStatic);
-    ctx.font = '800 20px Rubik, sans-serif'; ctx.textAlign = 'center';
-    for (const p of floats) { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = '#ffd23f'; ctx.fillText(p.text, p.x, p.y - (1 - p.life) * 30); }
-    ctx.globalAlpha = 1; $('#sT').textContent = Math.ceil(timeLeft);
-    requestAnimationFrame(frame);
+  const cl = free[Math.floor(Math.random() * free.length)];
+  for (let k = 0; k < 4; k++) { const m = new THREE.Mesh(coinGeo, coinMat); m.rotation.x = Math.PI / 2; m.position.set(LANES[cl], .75, z - 3 - k * 1.5); run.add(m); R.objs.push({ kind: 'coin', lane: cl, mesh: m, done: false }); }
+}
+function runInput(what) {
+  if (!R.on || R.ended) return;
+  if (what === 'left') R.lane = Math.max(0, R.lane - 1);
+  if (what === 'right') R.lane = Math.min(2, R.lane + 1);
+  if (what === 'jump' && R.y <= .001) { R.vy = 9.2; SFX.jump(); }
+}
+let runDown = null;
+function runPointerDown(e) { runDown = { x: e.clientX, y: e.clientY }; }
+function runPointerUp(e) {
+  if (!runDown) return; const dx = e.clientX - runDown.x, dy = e.clientY - runDown.y; runDown = null;
+  if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) runInput(dx < 0 ? 'left' : 'right');
+  else if (dy < -35) runInput('jump');
+  else { const fx = e.clientX / innerWidth; runInput(fx < .33 ? 'left' : fx > .67 ? 'right' : 'jump'); }
+}
+function runKey(e) {
+  const k = e.key;
+  if (['ArrowLeft', 'a', 'A'].includes(k)) { e.preventDefault(); runInput('left'); }
+  if (['ArrowRight', 'd', 'D'].includes(k)) { e.preventDefault(); runInput('right'); }
+  if (['ArrowUp', 'w', 'W', ' '].includes(k)) { e.preventDefault(); runInput('jump'); }
+}
+function runUpdate(dt) {
+  if (!R.on) return;
+  if (!R.ended) { R.t += dt; R.speed = 11 + R.t * .42; if (R.t >= R.dur) endRun(true); }
+  const d = R.ended ? 0 : R.speed * dt;
+  for (const g of segs) { g.position.z += d; if (g.position.z > SEG + 6) g.position.z -= NSEG * SEG; }
+  R.farZ += d; while (R.farZ > -57) { R.farZ -= 11; spawnRow(R.farZ); }
+  // explorer
+  R.x = lerp(R.x, LANES[R.lane], Math.min(1, dt * 14)); R.vy -= 27 * dt; R.y = Math.max(0, R.y + R.vy * dt); if (R.y === 0) R.vy = Math.max(0, R.vy);
+  R.inv = Math.max(0, R.inv - dt); if (!R.ended) R.phase += dt * R.speed * .9;
+  explorer.position.set(R.x, R.y, 0); explorer.rotation.z = (LANES[R.lane] - R.x) * -.15;
+  const { legs, arms, mats } = explorer.userData, sw = R.y > 0 ? .6 : Math.sin(R.phase) * .9;
+  legs[0].rotation.x = sw; legs[1].rotation.x = -sw; arms[0].rotation.x = -sw * .8; arms[1].rotation.x = sw * .8;
+  for (const m of mats) { m.transparent = R.inv > 0; m.opacity = R.inv > 0 ? .55 : 1; }
+  // obstacles and coins
+  const lanePos = Math.round((R.x + 1.7) / 1.7);
+  for (const o of R.objs) {
+    o.mesh.position.z += d; if (o.kind === 'coin') o.mesh.rotation.z += dt * 4;
+    if (o.done || R.ended) continue;
+    const z = o.mesh.position.z;
+    if (o.kind === 'coin') {
+      if (Math.abs(z) < .7 && o.lane === lanePos && R.y < 1.6) {
+        o.done = true; o.mesh.visible = false; R.combo++; R.bestCombo = Math.max(R.bestCombo, R.combo); R.coins++; G.coinsTotal++;
+        R.pts += Math.min(R.combo, 10); SFX.coin(R.combo);
+        if (R.coins % 12 === 0 && G.wedges < 3) { G.wedges++; toast('🪵 +1 wedge!'); }
+        $('#rC').textContent = R.coins; $('#rK').textContent = '×' + Math.min(R.combo, 10); $('#rW').textContent = G.wedges;
+      } else if (z > 1) o.done = true;
+      continue;
+    }
+    if (z > -.55 && z < .55 && o.lane === lanePos) {
+      const clear = (o.kind === 'log' && R.y > .62) || (o.kind === 'pit' && R.y > .15);
+      if (!clear && R.inv <= 0) { o.done = true; stumble(o); }
+    } else if (z >= .55) o.done = true;
   }
-  cv.addEventListener('pointerdown', e => {
-    if (!running) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    let hit = -1, best = 1e9; foes.forEach((f, i) => { const d = Math.hypot(f.x - x, f.y - y); if (d < f.r + 14 && d < best) { best = d; hit = i; } });
-    if (hit < 0) return;
-    const f = foes[hit], now = performance.now(); combo = now - lastZap < 1300 ? combo + 1 : 1; lastZap = now; bestCombo = Math.max(bestCombo, combo); zaps++; G.zapsTotal++;
-    const gain = Math.min(combo, 10); pts += gain; SFX.zap(combo);
-    const cols = ['#ffd23f', '#4de1ff', '#3dffb5', '#ff5c8a'];
-    if (!reduceMotion) for (let k = 0; k < 12; k++) { const a = Math.random() * 7, s = 80 + Math.random() * 160; parts.push({ x: f.x, y: f.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .5, c: cols[k % 4] }); }
-    floats.push({ x: f.x, y: f.y - f.r, text: '+' + gain, life: .9 });
-    foes.splice(hit, 1);
-    if (f.r > 16) { const nr = f.r * .66; foes.push(mk(f.x - nr / 2, f.y, nr), mk(f.x + nr / 2, f.y, nr)); }
-    if (!foes.length) { waves++; pts += 50; floats.push({ x: W / 2, y: H / 2, text: 'WAVE CLEARED +50', life: 1.2 }); foes.push(mk(Math.random() * (W - 100) + 50, Math.random() * (H - 100) + 50, 46)); tone(523, .15, 'triangle', .06); tone(784, .2, 'triangle', .06, 0, .1); }
-    if (zaps % 15 === 0 && G.shields < 3) { G.shields++; floats.push({ x: W / 2, y: 60, text: '🛡️ +1 SHIELD', life: 1.2 }); $('#sS').textContent = G.shields; }
-    $('#sZ').textContent = zaps; $('#sC').textContent = '×' + combo;
-  });
-  const onR = () => { if (G.screen === 'smash' && running) resize(); }; window.addEventListener('resize', onR);
-  requestAnimationFrame(t => { last = t; frame(t); });
-  function smashDone() {
-    window.removeEventListener('resize', onR); bumpScore(pts); SFX.win();
-    setScreen('smash', '<div class="grid2"><div class="card"><div class="kicker">Static Smash results</div><h2 style="font-size:34px;margin:6px 0 12px">⚡ ' + (zaps >= 30 ? 'Absolute zap machine!' : zaps >= 15 ? 'Nice zapping!' : 'He got away… for now.') + '</h2>' +
-      '<div class="grid3"><div class="card"><div class="stat">' + zaps + '<small>zaps</small></div></div><div class="card"><div class="stat">×' + bestCombo + '<small>best combo</small></div></div><div class="card"><div class="stat">+' + pts + '<small>points</small></div></div></div>' +
-      '<p class="sub" style="margin-top:12px">' + (G.shields > shieldsStart ? '🛡️ You earned ' + (G.shields - shieldsStart) + ' shield' + (G.shields - shieldsStart > 1 ? 's' : '') + '. ' : '') + 'Shields: ' + G.shields + '/3. ' + (waves ? 'Waves cleared: ' + waves + '.' : '') + '</p>' +
-      '<div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">Next circuit ➜</button></div></div>' +
-      '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG(zaps >= 15 ? 'hurt' : 'laugh', 180) + '</div></div></div>');
-    $('#go').onclick = () => { G.circuit++; circuitIntro(); };
-  }
+  R.objs = R.objs.filter(o => { if (o.mesh.position.z > 14) { run.remove(o.mesh); return false; } return true; });
+  // the boulder
+  if (!R.ended) R.boulderGoal = Math.min(11, R.boulderGoal + dt * .22);
+  R.boulderZ = lerp(R.boulderZ, R.boulderGoal, Math.min(1, dt * 3)); boulder.position.z = R.boulderZ; boulder.rotation.x -= d / 2.3;
+  boulder.position.x = lerp(boulder.position.x, R.x * .5, Math.min(1, dt * 2));
+  // camera
+  const sh = shakeT > 0 ? shakeAmp * (shakeT / .35) : 0;
+  runCam.position.set(R.x * .55 + (Math.random() - .5) * sh, 3.6 + (Math.random() - .5) * sh, 6.2); runCam.lookAt(R.x * .4, 1.1, -6);
+  runTorch.position.set(R.x, 3.6, 2.5);
+  const tl = $('#rT'); if (tl && !R.ended) tl.textContent = Math.max(0, Math.ceil(R.dur - R.t));
+}
+function stumble(o) {
+  R.hits++; R.combo = 0; R.inv = 1.3; R.boulderGoal = Math.max(2.6, R.boulderGoal - 2.6); SFX.bad(); SFX.rumble(); shake(.4);
+  if (o.kind !== 'pit') o.mesh.visible = false;
+  $('#rK').textContent = '×1'; $('#rH').textContent = '●'.repeat(R.hits) + '○'.repeat(Math.max(0, 3 - R.hits));
+  toast(o.kind === 'stone' ? 'Ouch! Ran into a stone.' : o.kind === 'log' ? 'Tripped over a log! Jump it next time.' : 'Fell into a pit! Jump it next time.', true);
+  if (R.hits >= 3) { R.boulderGoal = 1.4; endRun(false); }
+}
+function endRun(escaped) {
+  if (R.ended) return; R.ended = true; if (escaped) { R.pts += 100; SFX.win(); } else { SFX.thud(); SFX.rumble(); }
+  bumpScore(R.pts);
+  setTimeout(() => {
+    R.on = false; activeScene = 'temple';
+    setScreen('runDone', '<div class="center"><div class="panel pe" style="text-align:center"><div class="kicker">Boulder run</div><h2 style="font-size:32px;margin:6px 0 12px;color:var(--gold)">' + (escaped ? '🏃 You escaped!' : '🪨 Flattened… but you crawl out.') + '</h2>' +
+      '<div class="grid3"><div><div class="stat">' + R.coins + '<small>coins</small></div></div><div><div class="stat">×' + Math.min(R.bestCombo, 10) + '<small>best combo</small></div></div><div><div class="stat">+' + R.pts + '<small>points' + (escaped ? ' (incl. +100 escape)' : '') + '</small></div></div></div>' +
+      '<p class="sub" style="margin-top:12px">' + (G.wedges > R.wedgesStart ? '🪵 You earned ' + (G.wedges - R.wedgesStart) + ' wedge' + (G.wedges - R.wedgesStart > 1 ? 's' : '') + '. ' : '') + 'Wedges: ' + G.wedges + '/3.</p>' +
+      '<div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="go" type="button">Into the next chamber ➜</button></div></div></div>');
+    $('#go').onclick = () => { G.chamber++; chamberIntro(); };
+  }, escaped ? 900 : 1500);
 }
 
 // ================= end =================
 function endScreen() {
+  demoToken++; activeScene = 'temple';
   const acc = G.moves + G.mistakes ? Math.round(100 * G.moves / (G.moves + G.mistakes)) : 100;
-  const key = 'sc-best-' + G.mode, prev = +store.get(key, '0'), newBest = G.score > prev; if (newBest) store.set(key, String(G.score));
+  const k = 'sc-best-' + G.mode, prev = +store.get(k, '0'), newBest = G.score > prev; if (newBest) store.set(k, String(G.score));
   netPush('done', G.score);
-  setScreen('end', '<div class="grid2"><div class="card"><div class="kicker">All 5 circuits restored · ' + G.mode.toUpperCase() + '</div><h2 style="font-size:38px;margin:6px 0 8px">🏁 Static is defeated!</h2>' +
-    '<div style="font-size:60px;font-weight:800;color:var(--volt)">' + G.score.toLocaleString() + '</div><p class="note" style="margin-top:0">points' + (newBest ? ' · <b style="color:var(--hot)">new personal best!</b>' : ' · your best: ' + prev.toLocaleString()) + '</p>' +
-    '<div class="grid3"><div class="card"><div class="stat">' + acc + '%<small>move accuracy</small></div></div><div class="card"><div class="stat">' + G.perfect + '/' + G.puzzlesDone + '<small>perfect arrays</small></div></div><div class="card"><div class="stat">' + G.bestStreak + '<small>best streak</small></div></div></div>' +
-    '<div id="endlb"></div><div class="row" style="margin-top:14px"><button class="btn" id="again" type="button">Play again ⚡</button><button class="btn ghost" id="sw" type="button">Try ' + (G.mode === 'sl' ? 'HL' : 'SL') + ' mode</button></div></div>' +
-    '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG('hurt', 220) + '</div><p class="note">“Fine. FINE. Your arrays are sorted. I’ll be in the recycle bin.”</p></div></div>');
+  P = null; buildRow([7, 21, 36, 50, 64, 79, 93]); WALLS.shown = ROW.half + 5; setWalls(WALLS.shown);
+  ROW.blocks.forEach((m, i) => { m.userData.spin = .4 + i * .05; m.userData.liftTarget = .25 + .12 * Math.sin(i); });
+  setScreen('end', '<div class="center"><div class="panel pe"><div class="kicker">All 5 chambers · ' + G.mode.toUpperCase() + '</div><h2 style="font-size:36px;margin:6px 0 8px;color:var(--gold)">🗿 You claimed the idol!</h2>' +
+    '<div style="font-size:56px;font-weight:800;color:var(--gold)">' + G.score.toLocaleString() + '</div><p class="note" style="margin-top:0">points' + (newBest ? ' · <b style="color:var(--torch)">new personal best!</b>' : ' · your best: ' + prev.toLocaleString()) + '</p>' +
+    '<div class="grid3"><div><div class="stat">' + acc + '%<small>move accuracy</small></div></div><div><div class="stat">' + G.perfect + '/' + G.puzzlesDone + '<small>perfect rows</small></div></div><div><div class="stat">' + G.bestStreak + '<small>best streak</small></div></div></div>' +
+    '<p class="note" style="margin-top:10px">Crushed ' + G.crushes + ' time' + (G.crushes === 1 ? '' : 's') + ' · ' + G.coinsTotal + ' coins grabbed</p>' +
+    '<div id="endlb"></div><div class="row" style="margin-top:14px"><button class="btn" id="again" type="button">Play again</button><button class="btn ghost" id="sw" type="button">Try ' + (G.mode === 'sl' ? 'HL' : 'SL') + ' mode</button></div></div></div>');
+  fitCamera({ t: 60 });
   SFX.win(); $('#again').onclick = titleScreen; $('#sw').onclick = () => { G.mode = G.mode === 'sl' ? 'hl' : 'sl'; store.set('sc-mode', G.mode); titleScreen(); };
   renderLbInto($('#endlb'), true);
+}
+
+// ================= main loop =================
+let last = performance.now(), tAll = 0, perfFrames = 0, perfT = 0, perfStage = 0;
+function adaptQuality(rawDt) {
+  if (perfStage >= 2 || document.hidden) return; perfFrames++; perfT += rawDt;
+  if (perfT < 2.5) return; const fps = perfFrames / perfT; perfFrames = 0; perfT = 0;
+  if (fps < 32) { perfStage++; if (perfStage === 1) { pixelCap = 1; renderer.setPixelRatio(1); } else { renderer.shadowMap.enabled = false; temple.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; }); }); } renderer.setSize(innerWidth, innerHeight); }
+  else perfStage = 2;
+}
+function loop(now) {
+  const raw = Math.max(0, (now - last) / 1000), dt = Math.min(.05, raw); last = now; tAll += dt; adaptQuality(Math.min(raw, 1));
+  stepTweens(dt);
+  if (shakeT > 0) shakeT -= dt; else shakeAmp = 0;
+  if (activeScene === 'run') { runUpdate(dt); renderer.render(run, runCam); requestAnimationFrame(loop); return; }
+  // torches flicker gently (no flashing)
+  for (const t of torches) { const f = 1 + .07 * Math.sin(tAll * 6.1 + t.seed) + .04 * Math.sin(tAll * 11.3 + t.seed * 2); if (t.light) t.light.intensity = 26 * f; t.flame.scale.set(1, f, 1); t.glow.material.opacity = .75 + .1 * Math.sin(tAll * 5 + t.seed); }
+  // dust
+  const pa = dustGeo.attributes.position; dustBoost = Math.max(0, dustBoost - dt * .8);
+  for (let k = 0; k < DUST; k++) { let y = pa.getY(k) - dt * (.08 + dustBoost * 1.6); if (y < 0) y = 8; pa.setY(k, y); pa.setX(k, pa.getX(k) + Math.sin(tAll * .3 + k) * dt * .05); }
+  pa.needsUpdate = true;
+  // walls
+  if (G.screen === 'play' && P) {
+    if (!P.done) P.rem -= P.busy ? dt * .5 : dt;
+    const frac = P.rem / P.T, goal = P.crushed ? ROW.half - .02 : P.done ? wallInnerFor(1) : wallInnerFor(frac);
+    WALLS.shown = lerp(WALLS.shown, goal, Math.min(1, dt * (P.crushed ? 9 : 5))); setWalls(WALLS.shown);
+    const mi = $('#meterI');
+    if (mi) { mi.style.width = clamp(frac * 100, 0, 100) + '%'; $('#meter').classList.toggle('danger', frac < .3); const wt = $('#wallTxt'); if (wt) wt.textContent = P.done ? '' : Math.max(0, Math.ceil(P.rem)) + 's until they reach the stones'; }
+    if (!P.done && frac < .3 && tAll - P.lastRumble > 2.6) { P.lastRumble = tAll; SFX.grind(); dustBoost = Math.max(dustBoost, .5); }
+    if (!P.done && P.rem <= 0) crushed();
+  }
+  // stones: lift, glow
+  for (const m of ROW.blocks) {
+    const u = m.userData; if (!m.visible) continue;
+    u.lift = lerp(u.lift, u.liftTarget, Math.min(1, dt * 10));
+    if (!u.tw) {
+      const bob = u.liftTarget > 0 ? Math.sin(tAll * 3 + u.id) * .05 : 0;
+      m.position.y = ROW.baseY + u.lift + bob;
+      if (P) m.position.x = lerp(m.position.x, xAt(posOf(u.id)), Math.min(1, dt * 12));
+    }
+    if (u.spin) m.rotation.y += dt * u.spin * 1.5;
+    let em = 0x000000, ei = 0, dim = 1;
+    if (P) {
+      const p = posOf(u.id), o = P.pz.ops[P.k];
+      if (P.locked.has(p)) { em = 0xb8860b; ei = .28; }
+      if (P.kind === 'quick' && o && !P.done) { if (p < o.lo || p > o.hi) dim = .45; if (p === o.hi && o.t === 'qcmp') { em = 0x8b5cf6; ei = .45; } }
+      if (P.sel === u.id) { em = 0x52d3e0; ei = .5; }
+      if (P.hint && P.hint.includes(u.id)) { em = 0xff5a8a; ei = .35 + .15 * Math.sin(tAll * 3); }
+      if (P.foundPos === p) { em = 0x4fe0a8; ei = .6; }
+      if (hoverId === u.id && P.sel !== u.id && !P.done && !ei) { em = 0xffe2a8; ei = .1; }
+      if (P.kbd && p === P.cursor && !P.done) { em = 0xf0bf4c; ei = Math.max(ei, .4); }
+    }
+    for (const mt of [u.side, u.face]) { mt.emissive.setHex(em); mt.emissiveIntensity = ei; mt.color.setScalar(dim); }
+  }
+  // camera ease + shake
+  camera.position.lerp(camGoal.pos, Math.min(1, dt * 3)); camLook.lerp(camGoal.look, Math.min(1, dt * 3));
+  if (G.screen === 'title' && !reduceMotion) camera.position.x = camGoal.pos.x + Math.sin(tAll * .25) * 1.2;
+  const sh = shakeT > 0 ? shakeAmp * (shakeT / .35) : 0; camera.lookAt(camLook.x + (Math.random() - .5) * sh, camLook.y + (Math.random() - .5) * sh, camLook.z);
+  renderer.render(temple, camera);
+  requestAnimationFrame(loop);
 }
 
 // ================= class leaderboard (Firebase) =================
@@ -774,20 +990,19 @@ function renderLbInto(el, isEnd) {
   if (!G.cls) { el.innerHTML = isEnd ? '<p class="note" style="margin-top:12px">Add a class code on the title screen to compare scores with your classmates.</p>' : '<p class="sub">You’re playing without a class code. Add one on the title screen to compare scores with your class!</p>'; return; }
   if (NET.status === 'fail') { el.innerHTML = '<p class="note" style="margin-top:12px">Couldn’t reach the class leaderboard (maybe the school network blocks it). Your score still counts on this device.</p>'; return; }
   if (NET.status !== 'on') { el.innerHTML = '<p class="note" style="margin-top:12px">Connecting to the class leaderboard…</p>'; return; }
-  const ST = { c1: 'Circuit 1', c2: 'Circuit 2', c3: 'Circuit 3', c4: 'Circuit 4', c5: 'Circuit 5', done: 'Finished' };
+  const ST = { c1: 'Chamber 1', c2: 'Chamber 2', c3: 'Chamber 3', c4: 'Chamber 4', c5: 'Chamber 5', done: 'Finished' };
   el.innerHTML = '<div class="kicker" style="margin-top:14px">Class ' + esc(G.cls.toUpperCase()) + ' · ' + G.mode.toUpperCase() + '</div><ol class="lb">' +
     (NET.rows.slice(0, 15).map((r, i) => '<li class="' + (r.me ? 'me' : '') + '"><span>' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)) + '</span><span>' + esc(r.n) + (r.me ? ' (you)' : '') + '</span><span class="note">' + (ST[r.st] || '') + '</span><span class="s">' + r.s.toLocaleString() + '</span></li>').join('') || '<li><span></span><span class="note">No scores yet. Be the first!</span><span></span><span></span></li>') + '</ol>';
 }
 function showLeaderboard() {
-  const m = $('#modal'); m.innerHTML = '<div class="card"><h2 style="font-size:24px">🏆 Class leaderboard</h2><div id="mlb"></div><div class="row" style="margin-top:12px"><button class="btn" id="mclose" type="button">Close</button></div></div>';
+  const m = $('#modal'); m.innerHTML = '<div class="panel"><h2 style="font-size:24px">🏆 Class leaderboard</h2><div id="mlb"></div><div class="row" style="margin-top:12px"><button class="btn" id="mclose" type="button">Close</button></div></div>';
   m.hidden = false; renderLbInto($('#mlb'), false);
   $('#mclose').onclick = () => { m.hidden = true; m.innerHTML = ''; }; m.onclick = e => { if (e.target === m) { m.hidden = true; m.innerHTML = ''; } };
 }
 
 // test hooks (used by the automated checks; harmless in class)
-window.SC = { G, get P() { return P; }, act, expected, startPuzzle, circuitIntro, finishPuzzle, posOf, smashIntro, endScreen };
-titleScreen();
-})();
+window.SC = { setFast(v) { FAST = !!v; }, G, get P() { return P; }, get R() { return R; }, act, expected, startPuzzle, chamberIntro, runIntro, startRun, runInput, endScreen, posOf, tapStone, meshOf, camera, pickAt };
+(document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, sleep(1500)]) : Promise.resolve()).then(() => { blockTexCache.clear(); labelCache.clear(); titleScreen(); requestAnimationFrame(loop); });
 </script>
 </body>
 </html>

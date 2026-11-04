@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sort Circuit</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E⚡%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Pick up the blocks and run the algorithm yourself. An IB Computer Science B2.4 algorithms game with SL and HL modes.">
+<script>
+// Firebase settings for the class leaderboard (same project as Packet Thief, Neuron Nursery and Choo-Choo Queue; web config keys are public by design, access is controlled by the database rules)
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCM8D0dck6EbdVelmyvmSOlIfOjZuB2-TU",
+  authDomain: "ib-byte-escape.firebaseapp.com",
+  databaseURL: "https://ib-byte-escape-default-rtdb.firebaseio.com",
+  projectId: "ib-byte-escape",
+  storageBucket: "ib-byte-escape.firebasestorage.app",
+  messagingSenderId: "95663407511",
+  appId: "1:95663407511:web:0e8f7b4e063542b23e44d2"
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #081a17; --board: #0e2b25; --board2: #133a32; --line: #1f5a4c; --trace: #b8922c;
+    --ink: #e6fff5; --muted: #8cb9ac; --mint: #3dffb5; --volt: #ffd23f; --hot: #ff5c8a; --cyan: #4de1ff; --purple: #a98bff;
+    --bad: #ff8a4c; --good: #3dffb5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font-family: "Rubik", system-ui, sans-serif; overflow-x: hidden;
+    background-image: radial-gradient(circle at 20% 10%, #0f342c 0, transparent 40%), radial-gradient(circle at 85% 90%, #102e3a 0, transparent 45%); }
+  button { font-family: inherit; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; }
+  /* top bar */
+  .bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); background: rgba(8,26,23,.7); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(6px); }
+  .logo { font-weight: 800; font-size: 20px; letter-spacing: .04em; margin-right: auto; display: flex; align-items: center; gap: 8px; }
+  .logo .bolt { color: var(--volt); }
+  .chip { border: 1px solid var(--line); background: var(--board); border-radius: 10px; padding: 6px 10px; font-weight: 600; font-size: 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+  .chip b { color: var(--volt); }
+  .iconbtn { border: 1px solid var(--line); background: var(--board); color: var(--ink); border-radius: 10px; padding: 6px 10px; font-size: 16px; cursor: pointer; }
+  .iconbtn:hover { border-color: var(--mint); }
+  main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 40px; }
+  .btn { border: 0; border-radius: 14px; padding: 13px 22px; font-size: 17px; font-weight: 700; cursor: pointer; color: #062019; background: var(--mint); box-shadow: 0 4px 0 #1a9d70, 0 0 0 0 transparent; transition: transform .08s; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a9d70; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+  .btn.volt { background: var(--volt); box-shadow: 0 4px 0 #b38d10; }
+  .btn.hot { background: var(--hot); color: #2a0612; box-shadow: 0 4px 0 #b3315a; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .card { background: linear-gradient(180deg, var(--board2), var(--board)); border: 1px solid var(--line); border-radius: 20px; padding: 20px; }
+  .kicker { text-transform: uppercase; letter-spacing: .14em; font-weight: 700; font-size: 12px; color: var(--cyan); }
+  h1, h2, h3 { margin: 0; }
+  .sub { color: var(--muted); font-size: 17px; line-height: 1.55; }
+  .note { color: var(--muted); font-size: 14px; line-height: 1.45; }
+  .grid2 { display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; align-items: center; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .grid3 { grid-template-columns: 1fr; } .logo { font-size: 17px; } }
+  input[type=text] { font-family: inherit; font-size: 17px; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--line); width: 100%; color: var(--ink); background: #071613; }
+  input[type=text]:focus { outline: 2px solid var(--mint); }
+  label.f { display: block; font-weight: 600; margin: 12px 0 6px; font-size: 15px; }
+  .seg { display: inline-flex; background: #071613; border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); padding: 9px 18px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .seg button.on { background: var(--mint); color: #062019; }
+  .rule { background: #071613; border: 1px solid var(--line); border-left: 4px solid var(--cyan); border-radius: 12px; padding: 10px 14px; font-size: 15px; line-height: 1.5; margin-top: 8px; }
+  .rule b { color: var(--cyan); }
+  .stat { font-size: 28px; font-weight: 800; color: var(--volt); } .stat small { display: block; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #12443a; color: var(--mint); }
+
+  /* play screen */
+  .play { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 980px) { .play { grid-template-columns: 1fr; } }
+  .prompt { font-size: 19px; font-weight: 600; line-height: 1.4; min-height: 54px; }
+  .prompt .v { color: var(--volt); font-weight: 800; }
+  .target { display: inline-flex; align-items: center; gap: 8px; background: #2a2208; border: 1px solid #6b5614; color: var(--volt); border-radius: 12px; padding: 4px 12px; font-weight: 800; font-size: 18px; }
+  .stage { position: relative; height: 318px; margin-top: 10px; border-radius: 18px; border: 1px solid var(--line); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+    background-color: #0b2621; background-image: linear-gradient(rgba(61,255,181,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(61,255,181,.05) 1px, transparent 1px); background-size: 26px 26px; }
+  .stage svg.traces { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .blk { position: absolute; top: 0; left: 0; border: 0; padding: 0; border-radius: 14px; cursor: grab; color: #0a1512; font-weight: 800; display: flex; align-items: center; justify-content: center;
+    transition: transform .26s cubic-bezier(.3,1.4,.5,1), opacity .3s, filter .3s; box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.35), 0 6px 14px rgba(0,0,0,.35); z-index: 3; }
+  .blk:focus-visible { outline: 3px solid var(--volt); outline-offset: 3px; }
+  .blk.lift { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), inset 0 3px 0 rgba(255,255,255,.35), 0 0 0 3px var(--volt), 0 18px 26px rgba(0,0,0,.5); z-index: 6; }
+  .blk.drag { transition: none; z-index: 9; pointer-events: none; cursor: grabbing; }
+  .blk.over { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), 0 0 0 4px var(--cyan); }
+  .blk.locked::after { content: "✓"; position: absolute; top: -9px; right: -7px; width: 22px; height: 22px; border-radius: 50%; background: var(--mint); color: #062019; font-size: 13px; display: grid; place-items: center; box-shadow: 0 2px 0 #1a9d70; }
+  .blk.gone { opacity: .16; filter: grayscale(1); cursor: default; }
+  .blk.dim { opacity: .38; filter: saturate(.3); }
+  .blk.found { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), 0 0 0 4px var(--mint), 0 0 26px rgba(61,255,181,.55); }
+  .blk.hint { box-shadow: inset 0 -6px 0 rgba(0,0,0,.28), 0 0 0 4px var(--hot), 0 0 22px rgba(255,92,138,.5); }
+  .blk .cmpb { position: absolute; top: -42px; left: 50%; transform: translateX(-50%); background: var(--volt); color: #241b00; border-radius: 10px; padding: 3px 9px; font-size: 14px; white-space: nowrap; font-weight: 800; }
+  .stage.fuzz .blk:not(.gone) { color: transparent; background: repeating-linear-gradient(45deg, #5c6b67 0 3px, #3c4845 3px 6px) !important; }
+  .stage.fuzz .blk .cmpb { color: #241b00; }
+  .idx { position: absolute; font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--muted); text-align: center; z-index: 2; }
+  .mk { position: absolute; z-index: 4; font-weight: 800; font-size: 13px; text-align: center; white-space: nowrap; transition: left .26s, top .26s, width .26s; pointer-events: none; }
+  .mk .tag { display: inline-block; border-radius: 8px; padding: 2px 7px; }
+  .stage.tight .mk { font-size: 11px; } .stage.tight .mk .tag { padding: 1px 4px; } .stage.tight .idx { font-size: 10px; } .stage.tight .blk.locked::after { width: 14px; height: 14px; font-size: 9px; top: -6px; right: -4px; }
+  .stage.tight .blk .cmpb { font-size: 12px; top: -34px; }
+  .zone { position: absolute; border-radius: 16px; z-index: 1; transition: left .26s, width .26s, opacity .2s; pointer-events: none; }
+  .ctrls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .side .card { padding: 16px; }
+  pre.code { margin: 8px 0 0; font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.65; background: #071613; border: 1px solid var(--line); border-radius: 12px; padding: 10px 6px; white-space: pre; overflow-x: auto; }
+  pre.code span { display: block; padding: 0 8px; border-radius: 6px; color: #b5d8cd; }
+  pre.code span.on { background: #24442b; color: var(--volt); }
+  .meter { height: 10px; background: #071613; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+  .meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--mint), var(--cyan)); width: 0; transition: width .3s; }
+  .streak { font-weight: 800; font-size: 22px; color: var(--volt); }
+  .toast { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: #071613; border: 2px solid var(--volt); color: var(--ink); border-radius: 12px; padding: 6px 14px; font-weight: 700; font-size: 16px; z-index: 12; pointer-events: none; animation: toast 1.8s ease forwards; white-space: nowrap; max-width: 94%; overflow: hidden; text-overflow: ellipsis; }
+  .toast.bad { border-color: var(--bad); }
+  @keyframes toast { 0% { opacity: 0; transform: translate(-50%, -8px); } 12% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
+  .pop { position: absolute; z-index: 11; font-weight: 800; font-size: 18px; color: var(--volt); pointer-events: none; animation: pop 1s ease-out forwards; }
+  @keyframes pop { 0% { opacity: 0; transform: translateY(6px) scale(.8); } 20% { opacity: 1; transform: translateY(0) scale(1.1); } 100% { opacity: 0; transform: translateY(-30px) scale(1); } }
+  .spark { position: absolute; width: 7px; height: 7px; border-radius: 50%; z-index: 10; pointer-events: none; animation: spark .6s ease-out forwards; }
+  @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+  .villain { position: absolute; z-index: 13; border: 0; background: transparent; padding: 0; cursor: pointer; }
+  .villain .fuse { position: absolute; inset: -6px; }
+  .mini-static { position: absolute; right: 10px; top: 8px; z-index: 5; pointer-events: none; transition: transform .2s; }
+  .wobble { animation: wob .5s ease; } @keyframes wob { 25% { transform: rotate(-10deg) scale(1.1); } 75% { transform: rotate(10deg) scale(1.1); } }
+  .shake { animation: shake .35s ease; } @keyframes shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+  .overlay { position: absolute; inset: 0; z-index: 15; background: rgba(5,16,14,.86); display: grid; place-items: center; padding: 16px; border-radius: 18px; }
+  .modal { position: fixed; inset: 0; background: rgba(3,10,9,.75); display: grid; place-items: center; z-index: 50; padding: 16px; }
+  .modal[hidden] { display: none; }
+  .modal .card { width: min(520px, 100%); max-height: 86vh; overflow: auto; }
+  ol.lb { list-style: none; padding: 0; margin: 10px 0 0; }
+  ol.lb li { display: grid; grid-template-columns: 34px 1fr auto auto; gap: 10px; padding: 8px 10px; border-radius: 10px; align-items: center; }
+  ol.lb li:nth-child(odd) { background: rgba(61,255,181,.05); } ol.lb li.me { background: rgba(255,210,63,.14); font-weight: 700; } ol.lb .s { font-weight: 800; color: var(--volt); }
+  .smash-wrap { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+  canvas#smash { display: block; width: 100%; height: min(62vh, 520px); touch-action: none; cursor: crosshair; }
+  .smash-hud { position: absolute; left: 12px; right: 12px; top: 10px; display: flex; gap: 8px; justify-content: space-between; pointer-events: none; flex-wrap: wrap; }
+  .demo { position: relative; height: 130px; }
+  .bounce { animation: bnc 2.4s ease-in-out infinite; } @keyframes bnc { 50% { transform: translateY(-8px) rotate(3deg); } }
+  @media (prefers-reduced-motion: reduce) { .blk, .mk, .zone { transition: none !important; } .bounce, .wobble, .shake, .pop, .spark, .toast { animation: none !important; } .spark { display: none; } }
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<main id="app"></main>
+<div class="modal" id="modal" hidden></div>
+<script src="engine.js"></script>
+<script>
+(function () {
+'use strict';
+const E = window.SCEngine;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ================= sound (synthesized) =================
+let AC = null, soundOn = store.get('sc-sound', '1') === '1';
+function tone(f, d = 0.1, type = 'sine', vol = 0.06, slide = 0, delay = 0) {
+  if (!soundOn) return;
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), t + d);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
+  } catch (e) {}
+}
+const SFX = {
+  pick() { tone(520, .06, 'triangle', .05); },
+  good(streak) { const f = 440 * Math.pow(2, Math.min(streak, 24) / 12); tone(f, .09, 'triangle', .06); tone(f * 1.5, .08, 'sine', .03, 0, .05); },
+  bad() { tone(180, .22, 'sawtooth', .05, -80); },
+  lock() { tone(880, .08, 'sine', .05); tone(1320, .12, 'sine', .04, 0, .07); },
+  win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, .16, 'triangle', .06, 0, i * .1)); },
+  zap(c) { const f = 300 + Math.min(c, 30) * 40; tone(f, .07, 'square', .035, 400); tone(f * 2, .05, 'sine', .03, 0, .04); },
+  fuzz() { tone(120, .4, 'sawtooth', .04, -40); },
+  thud() { tone(140, .12, 'sine', .07, -60); }
+};
+
+// ================= the villain =================
+function staticSVG(mood = 'idle', size = 120) {
+  const pts = []; const R = 44, r = 34, N = 14;
+  for (let k = 0; k < N * 2; k++) { const a = Math.PI * k / N, rr = k % 2 ? r : R + (k % 4 === 0 ? 4 : 0); pts.push((60 + Math.cos(a) * rr).toFixed(1) + ',' + (62 + Math.sin(a) * rr).toFixed(1)); }
+  const eyes = mood === 'hurt'
+    ? '<path d="M38 52 l12 10 M50 52 l-12 10 M70 52 l12 10 M82 52 l-12 10" stroke="#1a0b33" stroke-width="5" stroke-linecap="round"/>'
+    : '<circle cx="45" cy="56" r="11" fill="#f4f0ff"/><circle cx="76" cy="56" r="11" fill="#f4f0ff"/><circle cx="' + (mood === 'laugh' ? 45 : 48) + '" cy="58" r="5" fill="#1a0b33"/><circle cx="' + (mood === 'laugh' ? 76 : 79) + '" cy="58" r="5" fill="#1a0b33"/>' +
+      '<path d="M33 41 l20 6 M88 41 l-20 6" stroke="#1a0b33" stroke-width="4" stroke-linecap="round"/>';
+  const mouth = mood === 'hurt' ? '<path d="M46 84 q15 -10 30 0" stroke="#1a0b33" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    : mood === 'laugh' ? '<path d="M40 76 q21 24 42 0 z" fill="#1a0b33"/><path d="M48 77 l4 6 l4 -6 l4 6 l4 -6 l4 6 l4 -6" stroke="#f4f0ff" stroke-width="2" fill="none"/>'
+    : '<path d="M42 78 q19 14 38 0" stroke="#1a0b33" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M50 81 l3 5 l3 -4 l3 4 l3 -4 l3 4" stroke="#f4f0ff" stroke-width="2" fill="none"/>';
+  return '<svg viewBox="0 0 120 124" width="' + size + '" height="' + (size * 124 / 120) + '" aria-hidden="true">' +
+    '<path d="M60 8 l-7 -8 l3 9 l-6 1 l10 10" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linejoin="round"/>' +
+    '<polygon points="' + pts.join(' ') + '" fill="#7d4dff" stroke="#1a0b33" stroke-width="4" stroke-linejoin="round"/>' +
+    '<circle cx="60" cy="62" r="30" fill="#9b72ff"/>' + eyes + mouth + '</svg>';
+}
+
+// ================= game data =================
+const ALGO_RULES = {
+  bubble: '<b>Bubble sort:</b> compare the two highlighted neighbours. If the left one is bigger, swap them; otherwise leave them. After each pass the biggest unsorted value has bubbled to the end. A pass with no swaps means it’s sorted, so stop.',
+  selection: '<b>Selection sort:</b> on pass I, find the smallest value from index I to the end and swap it into index I. If it’s already there, leave it.',
+  binary: '<b>Binary search</b> (sorted data only): pick up the MID block, where MID = (LOW + HIGH) div 2 (round down). If it’s the target, done. Otherwise toss the half that can’t hold the target, MID included. If LOW passes HIGH, it’s not there.',
+  quick: '<b>Quicksort</b> (HL): the pivot is the <b>last</b> value of the section. Scan J from left to right: if A[J] is smaller than the pivot, swap it into the spot just after the small zone (I + 1); if not, leave it. Then swap the pivot in right after the small zone. Sort the left section, then the right.'
+};
+const CODE = {
+  bubble: ['loop PASS from 0 to N-2', '  SWAPPED = false', '  loop J from 0 to N-2-PASS', '    if A[J] > A[J+1] then', '      swap A[J], A[J+1]', '      SWAPPED = true', '  if not SWAPPED then stop'],
+  selection: ['loop I from 0 to N-2', '  MIN = I', '  loop J from I+1 to N-1', '    if A[J] < A[MIN] then', '      MIN = J', '  swap A[I], A[MIN]'],
+  binary: ['LOW = 0, HIGH = N-1', 'loop while LOW <= HIGH', '  MID = (LOW + HIGH) div 2', '  if A[MID] = TARGET then', '    return MID', '  else if A[MID] < TARGET then', '    LOW = MID + 1', '  else HIGH = MID - 1', 'return -1  // not found'],
+  quick: ['quicksort(LO, HI):', '  if LO < HI then', '    P = partition(LO, HI)', '    quicksort(LO, P-1)', '    quicksort(P+1, HI)', '', 'partition(LO, HI):', '  PIVOT = A[HI], I = LO - 1', '  loop J from LO to HI-1', '    if A[J] < PIVOT then', '      I = I + 1', '      swap A[I], A[J]', '  swap A[I+1], A[HI]', '  return I + 1']
+};
+const CIRCUITS = {
+  sl: [
+    { name: 'Boot Up', icon: '🔌', blurb: 'Static scrambled the power grid. Bubble sort it back, one neighbour swap at a time.', puzzles: [{ kind: 'bubble', n: 5 }, { kind: 'bubble', n: 6, maxOps: 15 }] },
+    { name: 'Selection Station', icon: '🎯', blurb: 'Grab the smallest block and slam it into place. Pass after pass.', puzzles: [{ kind: 'selection', n: 5 }, { kind: 'selection', n: 6 }] },
+    { name: 'Search Party', icon: '🔎', blurb: 'Static hid a value in a sorted row. Halve the search until you find it, or prove it isn’t there.', puzzles: [{ kind: 'binary', n: 11 }, { kind: 'binary', n: 13, found: false }] },
+    { name: 'Mixed Signals', icon: '📡', blurb: 'All three algorithms. And Static has started fuzzing your blocks, so zap him when he shows up.', ambush: 1, puzzles: [{ kind: 'bubble', n: 6, maxOps: 15 }, { kind: 'selection', n: 7 }, { kind: 'binary', n: 15 }] },
+    { name: 'Static’s Overload', icon: '⚡', blurb: 'Boss circuit. Bigger arrays, more fuzz. Keep that streak alive.', ambush: 2, boss: true, puzzles: [{ kind: 'bubble', n: 7, maxOps: 21 }, { kind: 'selection', n: 7 }, { kind: 'binary', n: 15, found: false }] }
+  ],
+  hl: [
+    { name: 'Boot Up', icon: '🔌', blurb: 'Warm-up: one bubble sort, one selection sort. Every step by hand.', puzzles: [{ kind: 'bubble', n: 6, maxOps: 15 }, { kind: 'selection', n: 6 }] },
+    { name: 'Search Party', icon: '🔎', blurb: 'Bigger sorted rows. Find the target, or prove it isn’t there.', puzzles: [{ kind: 'binary', n: 13, found: false }, { kind: 'binary', n: 15 }] },
+    { name: 'Recursion Reactor', icon: '🌀', blurb: 'Quicksort: partition around the pivot, then recurse on each side.', puzzles: [{ kind: 'quick', n: 6 }, { kind: 'quick', n: 7, maxOps: 22 }] },
+    { name: 'Mixed Signals', icon: '📡', blurb: 'Bubble, selection and quicksort back to back. Static has started fuzzing your blocks.', ambush: 1, puzzles: [{ kind: 'bubble', n: 7, maxOps: 21 }, { kind: 'selection', n: 7 }, { kind: 'quick', n: 7, maxOps: 22 }] },
+    { name: 'Static’s Overload', icon: '⚡', blurb: 'Boss circuit. Eight-block quicksort, a missing value, and constant fuzz.', ambush: 2, boss: true, puzzles: [{ kind: 'quick', n: 8, maxOps: 26 }, { kind: 'binary', n: 15, found: false }, { kind: 'bubble', n: 7, maxOps: 21 }] }
+  ]
+};
+
+const G = {
+  screen: 'title', mode: store.get('sc-mode', 'sl'), nick: store.get('sc-nick', ''), cls: store.get('sc-cls', ''),
+  circuit: 0, pIndex: 0, score: 0, streak: 0, bestStreak: 0, moves: 0, mistakes: 0, perfect: 0, puzzlesDone: 0, shields: 0, zapsTotal: 0
+};
+let P = null; // current puzzle state
+
+// ================= top bar =================
+function renderBar() {
+  const playing = G.screen !== 'title' && G.screen !== 'end';
+  $('#bar').innerHTML = '<div class="logo"><span class="bolt">⚡</span>SORT CIRCUIT</div>' +
+    (playing ? '<span class="chip">Circuit <b>' + (G.circuit + 1) + '/5</b></span><span class="chip">Score <b id="scoreChip">' + G.score.toLocaleString() + '</b></span>' +
+      '<span class="chip" title="Shields block one of Static’s fuzz attacks">🛡️ <b id="shieldChip">' + G.shields + '</b></span><span class="chip">' + G.mode.toUpperCase() + '</span>' : '') +
+    '<button class="iconbtn" id="lbBtn" aria-label="Class leaderboard" title="Class leaderboard">🏆</button><button class="iconbtn" id="sndBtn" aria-label="Toggle sound">' + (soundOn ? '🔊' : '🔇') + '</button>';
+  $('#lbBtn').onclick = showLeaderboard;
+  $('#sndBtn').onclick = () => { soundOn = !soundOn; store.set('sc-sound', soundOn ? '1' : '0'); renderBar(); };
+}
+function bumpScore(d) { G.score = Math.max(0, G.score + d); const c = $('#scoreChip'); if (c) c.textContent = G.score.toLocaleString(); }
+function setScreen(name, html) { G.screen = name; stopDemo(); $('#app').innerHTML = html; renderBar(); window.scrollTo(0, 0); }
+
+// ================= title =================
+let demoTimer = null;
+function stopDemo() { if (demoTimer) { clearInterval(demoTimer); demoTimer = null; } }
+function titleScreen() {
+  setScreen('title', '<div class="grid2"><div>' +
+    '<div class="kicker">IB Computer Science · B2.4 Programming algorithms</div>' +
+    '<h1 style="font-size:clamp(40px,7vw,68px);font-weight:800;letter-spacing:.02em;line-height:1;margin:8px 0 12px">Sort <span style="color:var(--volt)">Circuit</span></h1>' +
+    '<p class="sub">Static, a gremlin made of pure interference, has scrambled the data. Pick up the blocks and <b style="color:var(--ink)">run the algorithms yourself</b>: every compare, every swap, every half thrown away. Keep your streak alive, and smash Static between circuits.</p>' +
+    '<div class="card" style="margin-top:16px">' +
+    '<label class="f" for="nick">Your name (for the leaderboard)</label><input type="text" id="nick" maxlength="16" placeholder="e.g. Ada L." value="' + esc(G.nick) + '">' +
+    '<label class="f" for="cls">Class code (optional, from your teacher)</label><input type="text" id="cls" maxlength="20" placeholder="e.g. cs-p3" value="' + esc(G.cls) + '">' +
+    '<label class="f">Level</label><div class="seg" id="seg"><button type="button" data-m="sl">SL</button><button type="button" data-m="hl">HL</button></div>' +
+    '<p class="note" id="modeNote" style="margin:8px 0 0"></p>' +
+    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Power up ⚡</button><button class="btn ghost" id="how" type="button">How to play</button></div></div></div>' +
+    '<div><div class="card"><div class="kicker">Live demo · bubble sort</div><div class="stage demo" id="demo" style="height:150px;margin-top:10px"></div>' +
+    '<div class="row" style="margin-top:12px;align-items:center"><div class="bounce" style="display:inline-block">' + staticSVG('laugh', 92) + '</div><div class="note" style="flex:1">“Ha! Your arrays are MINE. Bet you can’t sort them by hand.” <br>— Static</div></div></div></div></div>');
+  const setMode = m => { G.mode = m; store.set('sc-mode', m); document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+    $('#modeNote').innerHTML = m === 'sl' ? 'SL: bubble sort, selection sort, binary search (B2.4.1–B2.4.3).' : 'HL: everything in SL plus quicksort, the recursive one (B2.4.4–B2.4.5).'; };
+  document.querySelectorAll('#seg button').forEach(b => b.onclick = () => setMode(b.dataset.m)); setMode(G.mode);
+  $('#go').onclick = () => {
+    G.nick = ($('#nick').value.trim() || 'Player').slice(0, 16); G.cls = $('#cls').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 20);
+    store.set('sc-nick', G.nick); store.set('sc-cls', G.cls);
+    Object.assign(G, { circuit: 0, pIndex: 0, score: 0, streak: 0, bestStreak: 0, moves: 0, mistakes: 0, perfect: 0, puzzlesDone: 0, shields: 0, zapsTotal: 0 });
+    netJoin().then(() => netPush('c1', 0)); circuitIntro();
+  };
+  $('#how').onclick = howTo;
+  runDemo();
+}
+function runDemo() {
+  const st = $('#demo'); if (!st) return;
+  let arr = E.shuffle([12, 27, 41, 58, 73, 90]), ops = E.bubbleOps(arr).ops, k = 0, hold = 0;
+  const draw = (hi) => { const W = st.clientWidth, n = arr.length, gap = 8, bw = Math.min(62, (W - 24 - gap * (n - 1)) / n), x0 = (W - (bw * n + gap * (n - 1))) / 2;
+    if (!st.children.length) arr.forEach(v => { const b = document.createElement('div'); b.className = 'blk'; b.dataset.v = v; b.textContent = v; st.appendChild(b); });
+    [...st.children].forEach(b => { const v = +b.dataset.v, i = arr.indexOf(v); b.style.cssText = blockStyle(v, bw, bw) + 'transform:translate(' + (x0 + i * (bw + gap)) + 'px,' + ((hi && hi.includes(i)) ? 30 : 46) + 'px);'; }); };
+  draw();
+  if (reduceMotion) return;
+  demoTimer = setInterval(() => {
+    if (!document.body.contains(st)) { stopDemo(); return; }
+    if (hold > 0) { hold--; if (!hold) { arr = E.shuffle(arr); ops = E.bubbleOps(arr).ops; k = 0; draw(); } return; }
+    const o = ops[k++]; if (!o) { hold = 3; draw(); return; }
+    if (o.swap) [arr[o.a], arr[o.b]] = [arr[o.b], arr[o.a]];
+    draw([o.a, o.b]);
+  }, 520);
+}
+function howTo() {
+  const m = $('#modal'); m.innerHTML = '<div class="card"><h2 style="font-size:24px">How to play</h2>' +
+    '<p class="sub" style="font-size:16px">You run the algorithm. Static watches for mistakes.</p>' +
+    '<div class="rule"><b>Swap two blocks:</b> drag one block onto another, or tap one and then tap the other.</div>' +
+    '<div class="rule"><b>Leave it:</b> when the algorithm says “no swap”, press <b>Leave it</b> (or the space bar).</div>' +
+    '<div class="rule"><b>Binary search:</b> tap the MID block to pick it up, then toss the half that can’t hold the target.</div>' +
+    '<div class="rule"><b>Streak:</b> every correct move in a row raises your multiplier (×1.5 at 5, ×2 at 10, ×3 at 20). A mistake resets it.</div>' +
+    '<div class="rule"><b>Static attacks</b> (later circuits): when he pops up, tap him before his fuse runs out or he fuzzes your blocks. Shields from Static Smash block an attack.</div>' +
+    '<div class="row" style="margin-top:14px"><button class="btn" id="mclose" type="button">Got it</button></div></div>';
+  m.hidden = false; $('#mclose').onclick = () => { m.hidden = true; m.innerHTML = ''; }; m.onclick = e => { if (e.target === m) { m.hidden = true; m.innerHTML = ''; } };
+}
+
+// block colour by value: cool (small) to warm (big)
+function blockStyle(v, w, h) {
+  const t = Math.max(0, Math.min(1, (v - 2) / 97)), hue = 190 - t * 190, light = 62 + Math.sin(t * Math.PI) * 4;
+  return 'width:' + w + 'px;height:' + h + 'px;font-size:' + Math.max(11, Math.min(32, Math.round(w * .42))) + 'px;border-radius:' + Math.max(6, Math.round(w * .17)) + 'px;background:linear-gradient(180deg,hsl(' + hue + ' 92% ' + (light + 10) + '%),hsl(' + hue + ' 85% ' + light + '%));';
+}
+
+// ================= circuit intro =================
+function circuitIntro() {
+  const C = CIRCUITS[G.mode][G.circuit], kinds = [...new Set(C.puzzles.map(p => p.kind))];
+  setScreen('intro', '<div class="grid2"><div class="card"><div class="kicker">Circuit ' + (G.circuit + 1) + ' of 5' + (C.boss ? ' · Boss' : '') + '</div>' +
+    '<h2 style="font-size:36px;margin:6px 0 10px">' + C.icon + ' ' + C.name + '</h2><p class="sub">' + C.blurb + '</p>' +
+    kinds.map(k => '<div class="rule">' + ALGO_RULES[k] + '</div>').join('') +
+    (C.ambush ? '<div class="rule" style="border-left-color:var(--hot)"><b style="color:var(--hot)">Static attacks:</b> tap him before his fuse burns out, or your blocks get fuzzed for a few seconds.' + (G.shields ? ' You have ' + G.shields + ' shield' + (G.shields > 1 ? 's' : '') + '.' : '') + '</div>' : '') +
+    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Start (' + C.puzzles.length + ' arrays)</button></div></div>' +
+    '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG(C.boss ? 'laugh' : 'idle', 200) + '</div><p class="note">' + (C.boss ? '“This is my FINAL form. Mostly because I ran out of forms.”' : ['“Sorting? By HAND? In this economy?”', '“I scrambled them extra hard this time.”', '“Bet you round MID up. Everyone rounds MID up.”', '“I hid one of the values. Or did I?”'][G.circuit % 4]) + '</p></div></div>');
+  $('#go').onclick = () => { G.pIndex = 0; startPuzzle(); };
+}
+
+// ================= puzzle =================
+function startPuzzle() {
+  const C = CIRCUITS[G.mode][G.circuit], spec = C.puzzles[G.pIndex];
+  const pz = E.build(spec);
+  P = { pz, kind: pz.kind, k: 0, order: pz.start.map((v, i) => i), vals: pz.start.slice(), sel: null, stepMiss: 0, miss: 0, t0: Date.now(), done: false,
+    locked: new Set(), gone: new Set(), low: 0, high: pz.start.length - 1, picked: false, busy: false, ambush: C.ambush || 0, ambT: null, fuzzT: null, villain: false };
+  // order[pos] = block id; vals[id] = value
+  setScreen('play', '<div class="play"><div>' +
+    '<div class="row" style="justify-content:space-between"><div><div class="kicker">Circuit ' + (G.circuit + 1) + ' · array ' + (G.pIndex + 1) + ' of ' + C.puzzles.length + '</div><h2 style="font-size:26px;margin-top:2px">' + pz.algo + (pz.kind === 'binary' ? ' &nbsp;<span class="target">🎯 target ' + pz.target + '</span>' : '') + '</h2></div>' +
+    '<div style="text-align:right"><div class="note">streak</div><div class="streak" id="streak">0</div></div></div>' +
+    '<div class="prompt" id="prompt" style="margin-top:8px"></div>' +
+    '<div class="stage" id="stage"><div class="mini-static" id="mini">' + staticSVG('idle', 54) + '</div></div>' +
+    '<div class="ctrls" id="ctrls"></div></div>' +
+    '<div class="side"><div class="card"><div class="kicker">Pseudocode</div><pre class="code" id="code"></pre>' +
+    '<div class="note" style="margin-top:10px">Progress</div><div class="meter"><i id="prog"></i></div>' +
+    '<div class="row" style="justify-content:space-between;margin-top:10px"><span class="note">Mistakes: <b id="miss" style="color:var(--bad)">0</b></span><span class="note">Moves: <b id="mv">0/' + pz.ops.length + '</b></span></div>' +
+    '<div class="rule" style="font-size:13.5px">' + ALGO_RULES[pz.kind] + '</div></div></div></div>');
+  $('#code').innerHTML = CODE[pz.kind].map((l, i) => '<span data-l="' + i + '">' + esc(l || ' ') + '</span>').join('');
+  const st = $('#stage');
+  pz.start.forEach((v, id) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'blk'; b.dataset.id = id; b.textContent = v; b.setAttribute('aria-label', 'block ' + v); st.appendChild(b); attachBlock(b); });
+  layout(); renderControls(); renderStep();
+  if (P.ambush) scheduleAmbush();
+}
+
+function geom() {
+  const st = $('#stage'), W = st.clientWidth, H = st.clientHeight, n = P.vals.length;
+  let gap = n > 10 ? 6 : 10, pad = 28;
+  if ((W - pad - gap * (n - 1)) / n < 36) { gap = 3; pad = 10; }
+  const bw = Math.floor(Math.min(84, (W - pad - gap * (n - 1)) / n)), x0 = Math.round((W - (bw * n + gap * (n - 1))) / 2), y0 = 80;
+  return { W, H, n, gap, bw, x0, y0, xAt: pos => x0 + pos * (bw + gap) };
+}
+function layout() {
+  if (!P) return; const g = geom(), st = $('#stage');
+  st.querySelectorAll('.idx').forEach(e => e.remove());
+  for (let pos = 0; pos < g.n; pos++) { const d = document.createElement('div'); d.className = 'idx'; d.style.cssText = 'left:' + g.xAt(pos) + 'px;width:' + g.bw + 'px;top:' + (g.y0 + g.bw + 30) + 'px'; d.textContent = pos; st.appendChild(d); }
+  P.order.forEach((id, pos) => {
+    const b = st.querySelector('.blk[data-id="' + id + '"]'); if (!b || b.classList.contains('drag')) return;
+    const lifted = b.classList.contains('lift') ? -18 : 0, dropped = P.gone.has(pos) ? 26 : 0;
+    b.style.cssText = blockStyle(P.vals[id], g.bw, g.bw) + 'transform:translate(' + g.xAt(pos) + 'px,' + (g.y0 + lifted + dropped) + 'px)';
+  });
+  drawMarkers();
+}
+window.addEventListener('resize', () => { if (G.screen === 'play') layout(); });
+
+function blockAt(pos) { return $('#stage .blk[data-id="' + P.order[pos] + '"]'); }
+function posOf(id) { return P.order.indexOf(+id); }
+function curVal(pos) { return P.vals[P.order[pos]]; }
+
+function drawMarkers() {
+  const st = $('#stage'); st.querySelectorAll('.mk,.zone').forEach(e => e.remove());
+  if (!P || P.done && P.kind !== 'binary') return;
+  const g = geom(), o = P.pz.ops[P.k];
+  const zone = (a, b, color, label) => { if (a > b) return; const z = document.createElement('div'); z.className = 'zone'; z.style.cssText = 'left:' + (g.xAt(a) - 6) + 'px;width:' + (g.xAt(b) - g.xAt(a) + g.bw + 12) + 'px;top:' + (g.y0 - 10) + 'px;height:' + (g.bw + 20) + 'px;background:' + color;
+    st.appendChild(z); if (label) mark(a, label, 'var(--muted)', 'transparent', g.y0 - 32, b); };
+  const mark = (pos, text, fg, bg, top, posEnd) => { const m = document.createElement('div'); m.className = 'mk'; const end = posEnd === undefined ? pos : posEnd;
+    m.style.cssText = 'left:' + g.xAt(pos) + 'px;width:' + (g.xAt(end) - g.xAt(pos) + g.bw) + 'px;top:' + top + 'px'; m.innerHTML = '<span class="tag" style="color:' + fg + ';background:' + bg + '">' + text + '</span>'; st.appendChild(m); };
+  const below = g.y0 + g.bw + 50, tight = g.bw < 40, T = (long, short) => tight ? short : long;
+  st.classList.toggle('tight', tight);
+  if (P.kind === 'bubble' && o) { zone(o.a, o.b, 'rgba(255,210,63,.12)'); mark(o.a, 'J', '#241b00', 'var(--volt)', below); mark(o.b, 'J+1', '#241b00', 'var(--volt)', below); }
+  if (P.kind === 'selection' && o) { zone(o.i, g.n - 1, 'rgba(77,225,255,.08)', 'unsorted part'); mark(o.i, 'I', '#062019', 'var(--cyan)', below); }
+  if (P.kind === 'binary') {
+    if (P.low <= P.high) { zone(P.low, P.high, 'rgba(77,225,255,.1)'); mark(P.low, T('LOW', 'L'), '#062019', 'var(--cyan)', below); mark(P.high, T('HIGH', 'H'), '#062019', 'var(--cyan)', P.high === P.low ? below + 24 : below); }
+    if (P.picked && o) mark(o.mid, T('MID', 'M'), '#241b00', 'var(--volt)', below + (o.mid === P.low || o.mid === P.high ? 24 : 0) + (P.low === P.high ? 24 : 0));
+  }
+  if (P.kind === 'quick' && o) {
+    zone(o.lo, o.hi, 'rgba(169,139,255,.1)', 'quicksort(' + o.lo + ', ' + o.hi + ')');
+    const i = o.t === 'qcmp' ? o.i : o.to - 1;
+    if (i >= o.lo) zone(o.lo, i, 'rgba(61,255,181,.14)');
+    mark(o.hi, T('★ pivot', '★'), '#1a0b33', 'var(--purple)', below);
+    if (o.t === 'qcmp') { mark(o.j, 'J', '#241b00', 'var(--volt)', below + 24); mark(Math.max(o.lo, 0), T('I = ', 'I=') + o.i, 'var(--mint)', 'transparent', below + 48); }
+    else mark(o.to, 'I+1', '#062019', 'var(--mint)', below + 24);
+  }
+}
+
+function hl(lines) { document.querySelectorAll('#code span').forEach(s => s.classList.toggle('on', lines.includes(+s.dataset.l))); }
+
+function renderControls() {
+  const c = $('#ctrls');
+  if (P.kind === 'binary') {
+    c.innerHTML = '<button class="btn hot" id="tossL" type="button" disabled>⬅ Toss left part</button><button class="btn hot" id="tossR" type="button" disabled>Toss right part ➡</button><span class="note" id="bnote">Tap the MID block first.</span>';
+    $('#tossL').onclick = () => act({ kind: 'cut', side: 'left' }); $('#tossR').onclick = () => act({ kind: 'cut', side: 'right' });
+  } else {
+    c.innerHTML = '<button class="btn volt" id="keep" type="button">✋ Leave it <span class="mono" style="font-size:12px;opacity:.7">space</span></button><span class="note">Swap: drag a block onto another, or tap two blocks.</span>';
+    $('#keep').onclick = () => act({ kind: 'keep' });
+  }
+}
+
+function renderStep() {
+  const o = P.pz.ops[P.k], pz = P.pz, pr = $('#prompt');
+  $('#prog').style.width = (100 * P.k / pz.ops.length) + '%'; $('#mv').textContent = P.k + '/' + pz.ops.length;
+  if (!o) return;
+  const V = x => '<span class="v">' + x + '</span>';
+  if (o.t === 'cmp') { pr.innerHTML = 'Pass ' + (o.pass + 1) + ': compare A[' + o.a + '] = ' + V(curVal(o.a)) + ' and A[' + o.b + '] = ' + V(curVal(o.b)) + '. Swap them or leave them?'; hl([3]); }
+  if (o.t === 'place') { pr.innerHTML = 'Pass ' + (o.i + 1) + ': find the smallest value from index ' + o.i + ' to the end and put it in index ' + V(o.i) + '.'; hl([2, 3, 4, 5]); }
+  if (o.t === 'mid') { pr.innerHTML = 'LOW = ' + V(P.low) + ', HIGH = ' + V(P.high) + '. Pick up the MID block.'; hl([2]); }
+  if (o.t === 'cut') { pr.innerHTML = 'A[MID] = ' + V(curVal(o.mid)) + ' and the target is ' + V(pz.target) + '. Toss the part that can’t hold ' + pz.target + '.'; hl([3, 5, 6, 7]); }
+  if (o.t === 'qcmp') {
+    if (o.j === o.lo) { toast('quicksort(' + o.lo + ', ' + o.hi + ') · pivot ' + curVal(o.hi)); }
+    pr.innerHTML = 'Pivot = ' + V(curVal(o.hi)) + '. J = ' + o.j + ': is ' + V(curVal(o.j)) + ' smaller than the pivot? If yes, swap it into index I + 1 = ' + V(o.i + 1) + '. If not, leave it.'; hl([8, 9, 10, 11]);
+  }
+  if (o.t === 'pivot') { pr.innerHTML = 'Scan done. Put the pivot ' + V(curVal(o.hi)) + ' right after the small zone, at index I + 1 = ' + V(o.to) + '.'; hl([12]); }
+  drawMarkers();
+}
+
+// ----- block interaction: drag onto another, or tap-tap -----
+function attachBlock(b) {
+  let start = null, dragging = false, overEl = null;
+  b.addEventListener('pointerdown', e => {
+    if (!P || P.done || P.busy || P.gone.has(posOf(b.dataset.id))) return;
+    if (P.kind === 'binary') return; // binary uses taps (click)
+    start = { x: e.clientX, y: e.clientY }; dragging = false; try { b.setPointerCapture(e.pointerId); } catch (er) {}
+  });
+  b.addEventListener('pointermove', e => {
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (!dragging && Math.hypot(dx, dy) > 8) { dragging = true; clearSel(); b.classList.add('drag', 'lift'); SFX.pick(); b.dataset.base = b.style.transform; }
+    if (dragging) {
+      b.style.transform = b.dataset.base.replace(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/, (m, x, y) => 'translate(' + (+x + dx) + 'px,' + (+y + dy - 14) + 'px) scale(1.08)');
+      const el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest && el.closest('.blk');
+      if (overEl && overEl !== t) overEl.classList.remove('over');
+      overEl = t && t !== b && !t.classList.contains('drag') ? t : null; if (overEl) overEl.classList.add('over');
+    }
+  });
+  const end = () => {
+    if (!start) return; start = null;
+    if (dragging) {
+      dragging = false; b.classList.remove('drag', 'lift'); const t = overEl; if (overEl) overEl.classList.remove('over'); overEl = null;
+      b.dataset.justDragged = '1'; setTimeout(() => { delete b.dataset.justDragged; }, 60);
+      if (t) act({ kind: 'swap', a: +b.dataset.id, b: +t.dataset.id }); else layout();
+    }
+  };
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', () => { if (start) { start = null; dragging = false; b.classList.remove('drag', 'lift'); if (overEl) overEl.classList.remove('over'); overEl = null; layout(); } });
+  b.addEventListener('click', () => {
+    if (!P || P.done || P.busy || b.dataset.justDragged) return;
+    const id = +b.dataset.id, pos = posOf(id);
+    if (P.kind === 'binary') {
+      if (P.gone.has(pos)) return;
+      const o = P.pz.ops[P.k]; if (!o) return;
+      if (o.t === 'mid') act({ kind: 'pick', pos });
+      else if (o.t === 'cut') { if (pos < o.mid) act({ kind: 'cut', side: 'left' }); else if (pos > o.mid) act({ kind: 'cut', side: 'right' }); }
+      return;
+    }
+    if (P.sel === null) { P.sel = id; b.classList.add('lift'); SFX.pick(); layout(); }
+    else if (P.sel === id) clearSel();
+    else { const a = P.sel; clearSel(); act({ kind: 'swap', a, b: id }); }
+  });
+}
+function clearSel() { if (P && P.sel !== null) { const e = $('#stage .blk[data-id="' + P.sel + '"]'); if (e) e.classList.remove('lift'); P.sel = null; layout(); } }
+window.addEventListener('keydown', e => {
+  if (G.screen !== 'play' || !P || P.done) return;
+  if ((e.key === ' ' || e.key === 'k' || e.key === 'K') && P.kind !== 'binary' && !(e.target && e.target.tagName === 'INPUT')) { e.preventDefault(); act({ kind: 'keep' }); }
+  if (e.key === 'Escape') clearSel();
+});
+
+// ----- judging a move -----
+function expected(o) {
+  if (o.t === 'cmp') return o.swap ? { kind: 'swap', p: [o.a, o.b] } : { kind: 'keep' };
+  if (o.t === 'place') return o.swap ? { kind: 'swap', p: [o.i, o.m] } : { kind: 'keep' };
+  if (o.t === 'qcmp') return o.swap ? { kind: 'swap', p: [o.i + 1, o.j] } : { kind: 'keep' };
+  if (o.t === 'pivot') return o.swap ? { kind: 'swap', p: [o.to, o.hi] } : { kind: 'keep' };
+  if (o.t === 'mid') return { kind: 'pick', pos: o.mid };
+  if (o.t === 'cut') return { kind: 'cut', side: o.side };
+}
+function matches(ex, a) {
+  if (ex.kind !== a.kind) return false;
+  if (ex.kind === 'swap') { const p = [posOf(a.a), posOf(a.b)].sort((x, y) => x - y), q = ex.p.slice().sort((x, y) => x - y); return p[0] === q[0] && p[1] === q[1]; }
+  if (ex.kind === 'pick') return ex.pos === a.pos;
+  if (ex.kind === 'cut') return ex.side === a.side;
+  return true;
+}
+function whyWrong(o, a) {
+  const v = curVal;
+  if (o.t === 'cmp') {
+    if (a.kind === 'keep') return v(o.a) + ' > ' + v(o.b) + ', so the left one is bigger: swap them!';
+    if (!o.swap) return v(o.a) + ' < ' + v(o.b) + ' is already in order: leave them.';
+    return 'Bubble sort only swaps the two highlighted neighbours.';
+  }
+  if (o.t === 'place') {
+    if (a.kind === 'keep') return 'There’s a smaller value later on. Index ' + o.i + ' needs the smallest from index ' + o.i + ' onward.';
+    if (!o.swap) return v(o.i) + ' is already the smallest from index ' + o.i + ' onward: leave it.';
+    return 'Swap the smallest value from index ' + o.i + ' onward into index ' + o.i + '.';
+  }
+  if (o.t === 'qcmp') {
+    if (a.kind === 'keep' && o.small) return v(o.j) + ' < pivot ' + v(o.hi) + ', so it joins the small zone: swap it into index ' + (o.i + 1) + '.';
+    if (a.kind === 'keep' || !o.small) return v(o.j) + ' > pivot ' + v(o.hi) + ', so it stays put: leave it.';
+    if (o.small && !o.swap) return v(o.j) + ' is already at index I + 1 = ' + (o.i + 1) + ', so it’s in the small zone without moving: leave it.';
+    return 'Swap A[J] (' + v(o.j) + ') with A[I + 1] (index ' + (o.i + 1) + ').';
+  }
+  if (o.t === 'pivot') { if (a.kind === 'keep') return 'Swap the pivot into index I + 1 = ' + o.to + '.'; if (!o.swap) return 'The pivot is already at index I + 1: leave it.'; return 'The pivot goes to index I + 1 = ' + o.to + ', right after the small zone.'; }
+  if (o.t === 'mid') return P.stepMiss >= 1 ? 'MID = (' + o.low + ' + ' + o.high + ') div 2 = ' + o.mid + '.' : 'That’s not MID. MID = (LOW + HIGH) div 2, rounded down.';
+  if (o.t === 'cut') return v(o.mid) + (v(o.mid) < P.pz.target ? ' < ' : ' > ') + P.pz.target + ', so the target can only be on the ' + (o.side === 'left' ? 'right' : 'left') + '. Toss the ' + o.side + ' part.';
+  return 'Not quite.';
+}
+function mult() { return G.streak >= 20 ? 3 : G.streak >= 10 ? 2 : G.streak >= 5 ? 1.5 : 1; }
+
+async function act(a) {
+  if (!P || P.done || P.busy) return;
+  const o = P.pz.ops[P.k]; if (!o) return;
+  if (P.kind === 'binary' && o.t === 'cut' && a.kind === 'pick') return;
+  clearHints();
+  const ex = expected(o);
+  if (!matches(ex, a)) { wrong(o, a); return; }
+  // correct
+  P.busy = true; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.moves++;
+  const pts = Math.round(10 * mult()); bumpScore(pts); SFX.good(G.streak);
+  $('#streak').textContent = G.streak + (mult() > 1 ? ' ×' + mult() : '');
+  if (G.streak === 5 || G.streak === 10 || G.streak === 20) toast('🔥 Streak ' + G.streak + '! Multiplier ×' + mult());
+  if (a.kind === 'swap') {
+    const p1 = posOf(a.a), p2 = posOf(a.b); [P.order[p1], P.order[p2]] = [P.order[p2], P.order[p1]];
+    layout(); sparksAt(p1); sparksAt(p2); popAt(p2, '+' + pts);
+  } else if (a.kind === 'keep') {
+    const ps = o.t === 'cmp' ? [o.a, o.b] : o.t === 'place' ? [o.i] : o.t === 'qcmp' ? [o.j] : [o.hi];
+    ps.forEach(p => { const e = blockAt(p); if (e) { e.classList.add('wobble'); setTimeout(() => e.classList.remove('wobble'), 500); } }); popAt(ps[0], '+' + pts);
+  } else if (a.kind === 'pick') {
+    P.picked = true; const e = blockAt(o.mid); e.classList.add('lift'); layout();
+    const v = curVal(o.mid), t = P.pz.target, cmp = document.createElement('span'); cmp.className = 'cmpb'; cmp.textContent = v === t ? v + ' = ' + t + ' 🎯' : v + (v < t ? ' < ' : ' > ') + t; e.appendChild(cmp);
+    popAt(o.mid, '+' + pts);
+    const tl = $('#tossL'), tr = $('#tossR'); if (tl) { tl.disabled = false; tr.disabled = false; } if ($('#bnote')) $('#bnote').textContent = 'Toss a part, or tap a block on that side.';
+  } else if (a.kind === 'cut') {
+    const e = blockAt(o.mid); e.classList.remove('lift'); const c = e.querySelector('.cmpb'); if (c) c.remove();
+    const from = o.side === 'left' ? P.low : o.mid, to = o.side === 'left' ? o.mid : P.high;
+    for (let p = from; p <= to; p++) P.gone.add(p);
+    if (o.side === 'left') P.low = o.mid + 1; else P.high = o.mid - 1;
+    P.picked = false; SFX.thud(); layout();
+    for (let p = from; p <= to; p++) blockAt(p).classList.add('gone');
+    const tl = $('#tossL'), tr = $('#tossR'); if (tl) { tl.disabled = true; tr.disabled = true; } if ($('#bnote')) $('#bnote').textContent = 'Tap the MID block next.';
+  }
+  P.stepMiss = 0; P.k++;
+  // locks after a step
+  const next = P.pz.ops[P.k];
+  if (P.kind === 'bubble' && (!next || next.pass !== o.pass)) {
+    const n = P.vals.length;
+    if (!next) { for (let p = 0; p < n; p++) lock(p); if (!P.pz.ops.filter(x => x.pass === o.pass).some(x => x.swap)) toast('No swaps that pass, so it’s sorted. Stop!'); }
+    else { lock(n - 1 - o.pass); toast('Pass ' + (o.pass + 1) + ' done: ' + curVal(n - 1 - o.pass) + ' bubbled to the end'); }
+  }
+  if (P.kind === 'selection') { lock(o.i); if (!next) lock(o.i + 1); }
+  if (P.kind === 'quick' && o.t === 'pivot') {
+    lock(o.to);
+    // sections of size 0 or 1 are already final
+    for (let p = 0; p < P.vals.length; p++) if (!P.locked.has(p) && !pendingSection(p)) lock(p, true);
+    if (next) toast('Pivot ' + curVal(o.to) + ' is home at index ' + o.to + '. Next: quicksort(' + next.lo + ', ' + next.hi + ')');
+  }
+  await sleep(reduceMotion ? 60 : 230);
+  P.busy = false;
+  if (P.k >= P.pz.ops.length) { finishPuzzle(); return; }
+  renderStep();
+}
+// is position p inside a section that still needs a partition?
+function pendingSection(p) { for (let k = P.k; k < P.pz.ops.length; k++) { const o = P.pz.ops[k]; if (p >= o.lo && p <= o.hi) return true; } return false; }
+function lock(p, quiet) { if (P.locked.has(p)) return; P.locked.add(p); const e = blockAt(p); if (e) e.classList.add('locked'); if (!quiet) SFX.lock(); }
+
+function wrong(o, a) {
+  const why = whyWrong(o, a);
+  G.streak = 0; G.mistakes++; P.miss++; P.stepMiss++; bumpScore(-15); SFX.bad();
+  $('#streak').textContent = '0'; $('#miss').textContent = P.miss;
+  const st = $('#stage'); st.classList.remove('shake'); void st.offsetWidth; st.classList.add('shake');
+  const mini = $('#mini'); if (mini) { mini.innerHTML = staticSVG('laugh', 54); mini.classList.add('wobble'); setTimeout(() => { mini.classList.remove('wobble'); if ($('#mini')) mini.innerHTML = staticSVG('idle', 54); }, 900); }
+  toast(why, true);
+  if (a.kind === 'swap') layout();
+  if (P.stepMiss >= 2) showHint(o);
+}
+function showHint(o) {
+  const ex = expected(o);
+  if (ex.kind === 'swap') ex.p.forEach(p => blockAt(p).classList.add('hint'));
+  if (ex.kind === 'pick') blockAt(ex.pos).classList.add('hint');
+  if (ex.kind === 'keep') { const k = $('#keep'); if (k) k.style.boxShadow = '0 4px 0 #b38d10, 0 0 0 4px var(--hot)'; }
+  if (ex.kind === 'cut') { const b = ex.side === 'left' ? $('#tossL') : $('#tossR'); if (b) b.style.outline = '4px solid var(--volt)'; }
+}
+function clearHints() { document.querySelectorAll('.blk.hint').forEach(e => e.classList.remove('hint')); const k = $('#keep'); if (k) k.style.boxShadow = ''; ['#tossL', '#tossR'].forEach(s => { const b = $(s); if (b) b.style.outline = ''; }); }
+
+function toast(text, bad) { const st = $('#stage'); if (!st) return; st.querySelectorAll('.toast').forEach(t => t.remove()); const t = document.createElement('div'); t.className = 'toast' + (bad ? ' bad' : ''); t.textContent = text; t.title = text; st.appendChild(t); setTimeout(() => t.remove(), 1900); }
+function popAt(pos, text) { const g = geom(), st = $('#stage'), d = document.createElement('div'); d.className = 'pop'; d.textContent = text; d.style.left = (g.xAt(pos) + g.bw / 2 - 14) + 'px'; d.style.top = (g.y0 - 40) + 'px'; st.appendChild(d); setTimeout(() => d.remove(), 1000); }
+function sparksAt(pos) {
+  if (reduceMotion) return; const g = geom(), st = $('#stage'), cols = ['#ffd23f', '#4de1ff', '#3dffb5', '#ff5c8a'];
+  for (let k = 0; k < 8; k++) { const s = document.createElement('div'); s.className = 'spark'; const ang = Math.PI * 2 * k / 8 + Math.random(), d = 26 + Math.random() * 22;
+    s.style.cssText = 'left:' + (g.xAt(pos) + g.bw / 2) + 'px;top:' + (g.y0 + g.bw / 2) + 'px;background:' + cols[k % 4] + ';--dx:' + (Math.cos(ang) * d) + 'px;--dy:' + (Math.sin(ang) * d) + 'px'; st.appendChild(s); setTimeout(() => s.remove(), 650); }
+}
+
+// ----- Static's fuzz attacks -----
+function scheduleAmbush() {
+  clearTimeout(P.ambT); const lo = P.ambush === 2 ? 9000 : 14000, hi = P.ambush === 2 ? 16000 : 24000;
+  const me = P; P.ambT = setTimeout(() => { if (P === me && !P.done && G.screen === 'play') ambush(); }, lo + Math.random() * (hi - lo));
+}
+function ambush() {
+  const st = $('#stage'); if (!st || P.villain) return;
+  P.villain = true; const g = geom(), size = 70, fuseMs = P.ambush === 2 ? 2800 : 3400;
+  const v = document.createElement('button'); v.type = 'button'; v.className = 'villain'; v.setAttribute('aria-label', 'Zap Static');
+  const x = 12 + Math.random() * (g.W - size - 24), y = Math.random() < .5 ? 8 : g.H - size - 8;
+  v.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + size + 'px;height:' + size + 'px';
+  const C = 2 * Math.PI * 40;
+  v.innerHTML = staticSVG('laugh', size) + '<svg class="fuse" viewBox="0 0 90 90" width="' + (size + 12) + '" height="' + (size + 12) + '"><circle cx="45" cy="45" r="40" fill="none" stroke="#ff5c8a" stroke-width="5" stroke-dasharray="' + C + '" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 45 45)"><animate attributeName="stroke-dashoffset" from="0" to="' + C + '" dur="' + fuseMs + 'ms" fill="freeze"/></circle></svg>';
+  st.appendChild(v); tone(660, .12, 'square', .03, -200);
+  const me = P;
+  const timer = setTimeout(() => {
+    if (P !== me || !v.isConnected) return; v.remove(); P.villain = false;
+    if (G.shields > 0) { G.shields--; renderBar(); toast('🛡️ Shield blocked Static’s fuzz!'); }
+    else { st.classList.add('fuzz'); SFX.fuzz(); toast('Static fuzzed your blocks! Remember where they were…', true); clearTimeout(P.fuzzT); P.fuzzT = setTimeout(() => { if (P === me) st.classList.remove('fuzz'); }, 5500); }
+    scheduleAmbush();
+  }, fuseMs);
+  v.onclick = e => { e.stopPropagation(); clearTimeout(timer); v.innerHTML = staticSVG('hurt', size); SFX.zap(8); bumpScore(40); toast('⚡ Zapped Static! +40'); P.villain = false; setTimeout(() => v.remove(), 450); scheduleAmbush(); };
+}
+
+// ----- puzzle complete -----
+function finishPuzzle() {
+  P.done = true; clearTimeout(P.ambT); clearTimeout(P.fuzzT); const st = $('#stage'); st.classList.remove('fuzz'); st.querySelectorAll('.villain').forEach(v => v.remove());
+  const pz = P.pz, secs = Math.round((Date.now() - P.t0) / 1000), par = pz.ops.length * 4, tb = Math.max(0, par - secs) * 3, perfect = P.miss === 0;
+  const bonus = 100 + tb + (perfect ? 100 : 0); bumpScore(bonus); G.puzzlesDone++; if (perfect) G.perfect++;
+  $('#prog').style.width = '100%'; $('#mv').textContent = pz.ops.length + '/' + pz.ops.length; SFX.win();
+  if (pz.kind === 'binary') { if (pz.found >= 0) { blockAt(pz.found).classList.add('found'); hl([4]); } else hl([8]); }
+  drawMarkers();
+  $('#prompt').innerHTML = pz.kind === 'binary' ? (pz.found >= 0 ? 'Found ' + pz.target + ' at index ' + pz.found + '. return ' + pz.found : 'LOW > HIGH, so ' + pz.target + ' isn’t in the array. return -1') : 'Sorted! Every block is locked in.';
+  let fact = pz.bigO;
+  if (pz.kind === 'binary') fact = (pz.found >= 0 ? 'Found ' + pz.target + ' at index ' + pz.found + ' in ' + pz.comparisons + ' comparisons. Linear search would have needed ' + pz.linear + '. '
+    : pz.target + ' isn’t here: LOW passed HIGH after ' + pz.comparisons + ' comparisons, so it returns -1. Linear search would have checked all ' + pz.linear + '. ') + pz.bigO;
+  if (pz.kind === 'bubble') { const passes = new Set(pz.ops.map(o => o.pass)).size; fact = passes + ' passes, ' + pz.ops.length + ' comparisons, ' + pz.ops.filter(o => o.swap).length + ' swaps. ' + pz.bigO; }
+  if (pz.kind === 'selection') fact = (pz.start.length - 1) + ' passes, ' + pz.ops.filter(o => o.swap).length + ' swaps. ' + pz.bigO;
+  if (pz.kind === 'quick') fact = pz.calls + ' partition calls, ' + pz.ops.filter(o => o.t === 'qcmp').length + ' comparisons with a pivot. ' + pz.bigO;
+  const C = CIRCUITS[G.mode][G.circuit], last = G.pIndex === C.puzzles.length - 1;
+  const ov = document.createElement('div'); ov.className = 'overlay';
+  ov.innerHTML = '<div style="max-width:560px;text-align:center"><div class="kicker">' + (perfect ? 'Flawless' : 'Circuit restored') + '</div><h2 style="font-size:30px;margin:6px 0 8px">' + (perfect ? '✨ Perfect run!' : pz.kind === 'binary' ? (pz.found >= 0 ? '🎯 Found it!' : '🚫 Proved it’s not there!') : '✅ Sorted it out!') + '</h2>' +
+    '<p class="note" style="font-size:15px">' + esc(fact) + '</p>' +
+    '<div class="row" style="justify-content:center;margin:10px 0 14px"><span class="chip">Finish <b>+100</b></span><span class="chip">Speed <b>+' + tb + '</b></span>' + (perfect ? '<span class="chip">No mistakes <b>+100</b></span>' : '<span class="chip">Mistakes <b style="color:var(--bad)">' + P.miss + '</b></span>') + '</div>' +
+    '<button class="btn" id="next" type="button">' + (last ? (G.circuit < 4 ? 'On to Static Smash ⚡' : 'See final score 🏁') : 'Next array ➜') + '</button></div>';
+  setTimeout(() => { st.appendChild(ov); $('#next').focus(); $('#next').onclick = () => {
+    if (!last) { G.pIndex++; startPuzzle(); return; }
+    netPush('c' + Math.min(5, G.circuit + 2));
+    if (G.circuit < 4) smashIntro(); else endScreen();
+  }; }, reduceMotion ? 100 : 700);
+  netPush('c' + (G.circuit + 1));
+}
+
+// ================= Static Smash (the mindless bit) =================
+function smashIntro() {
+  setScreen('smash', '<div class="grid2"><div class="card"><div class="kicker">Between circuits</div><h2 style="font-size:36px;margin:6px 0 10px">⚡ Static Smash</h2>' +
+    '<p class="sub">Static escaped into the circuit board. Tap him to zap him. Every zap splits him into two smaller, faster Statics, so keep tapping. Zap fast to build your combo.</p>' +
+    '<div class="rule"><b>Every 15 zaps = 1 shield</b> (max 3). A shield blocks one of Static’s fuzz attacks later. You have ' + G.shields + ' right now.</div>' +
+    '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Smash! (20 seconds)</button></div></div>' +
+    '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG('laugh', 190) + '</div><p class="note">“You’ll never catch all of me!”</p></div></div>');
+  $('#go').onclick = smash;
+}
+function smash() {
+  setScreen('smash', '<div class="smash-wrap"><canvas id="smash"></canvas><div class="smash-hud"><span class="chip">⏱ <b id="sT">20</b></span><span class="chip">Zaps <b id="sZ">0</b></span><span class="chip">Combo <b id="sC">×1</b></span><span class="chip">🛡️ <b id="sS">' + G.shields + '</b></span></div></div><p class="note" style="text-align:center;margin-top:8px">Tap the Statics. Big ones split, tiny ones pop.</p>');
+  const cv = $('#smash'), ctx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
+  const resize = () => { const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); drawBoard(); };
+  // circuit board background, drawn once
+  const bg = document.createElement('canvas'), bctx = bg.getContext('2d');
+  function drawBoard() {
+    bg.width = W * dpr; bg.height = H * dpr; bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bctx.fillStyle = '#0c2a24'; bctx.fillRect(0, 0, W, H);
+    bctx.strokeStyle = 'rgba(184,146,44,.45)'; bctx.lineWidth = 3; bctx.lineCap = 'round';
+    for (let k = 0; k < 26; k++) { let x = Math.random() * W, y = Math.random() * H; bctx.beginPath(); bctx.moveTo(x, y);
+      for (let s = 0; s < 4; s++) { if (Math.random() < .5) x += (Math.random() < .5 ? -1 : 1) * (40 + Math.random() * 120); else y += (Math.random() < .5 ? -1 : 1) * (40 + Math.random() * 100); bctx.lineTo(x, y); }
+      bctx.stroke(); bctx.fillStyle = 'rgba(184,146,44,.7)'; bctx.beginPath(); bctx.arc(x, y, 5, 0, 7); bctx.fill(); }
+    bctx.fillStyle = 'rgba(16,58,50,.9)'; for (let k = 0; k < 6; k++) { const x = Math.random() * (W - 90), y = Math.random() * (H - 50); bctx.fillRect(x, y, 70 + Math.random() * 40, 34); }
+  }
+  resize();
+  const speedK = reduceMotion ? .45 : 1;
+  const mk = (x, y, r) => { const a = Math.random() * 7, sp = (90 + (46 - r) * 7) * speedK; return { x, y, r, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: Math.random() * 7, hurt: 0 }; };
+  let foes = [mk(W / 2, H / 2, 46)], parts = [], floats = [], zaps = 0, combo = 0, bestCombo = 0, lastZap = 0, pts = 0, timeLeft = 20, waves = 0, running = true, last = performance.now();
+  const shieldsStart = G.shields;
+  window.SC.foes = () => foes.map(f => ({ x: f.x, y: f.y, r: f.r }));
+  function drawStatic(f) {
+    const { x, y, r } = f, N = 12; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(f.t * 3) * .15);
+    ctx.beginPath(); for (let k = 0; k < N * 2; k++) { const a = Math.PI * k / N, rr = k % 2 ? r * .78 : r; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath();
+    ctx.fillStyle = f.hurt > 0 ? '#c9b3ff' : '#7d4dff'; ctx.fill(); ctx.lineWidth = Math.max(2, r * .08); ctx.strokeStyle = '#1a0b33'; ctx.stroke();
+    ctx.fillStyle = '#9b72ff'; ctx.beginPath(); ctx.arc(0, 0, r * .62, 0, 7); ctx.fill();
+    const er = r * .2; ctx.fillStyle = '#f4f0ff'; ctx.beginPath(); ctx.arc(-r * .28, -r * .1, er, 0, 7); ctx.arc(r * .28, -r * .1, er, 0, 7); ctx.fill();
+    ctx.fillStyle = '#1a0b33'; ctx.beginPath(); ctx.arc(-r * .28 + Math.sign(f.vx) * er * .3, -r * .07, er * .5, 0, 7); ctx.arc(r * .28 + Math.sign(f.vx) * er * .3, -r * .07, er * .5, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#1a0b33'; ctx.lineWidth = Math.max(1.5, r * .07); ctx.beginPath(); ctx.arc(0, r * .2, r * .3, .2, Math.PI - .2); ctx.stroke(); ctx.restore();
+  }
+  function frame(now) {
+    if (!running) return; const dt = Math.min(.05, (now - last) / 1000); last = now;
+    timeLeft -= dt; if (timeLeft <= 0) { running = false; return smashDone(); }
+    if (combo && now - lastZap > 1300) { combo = 0; $('#sC').textContent = '×1'; }
+    for (const f of foes) { f.t += dt; f.hurt -= dt; f.x += f.vx * dt; f.y += f.vy * dt;
+      if (f.x < f.r) { f.x = f.r; f.vx = Math.abs(f.vx); } if (f.x > W - f.r) { f.x = W - f.r; f.vx = -Math.abs(f.vx); }
+      if (f.y < f.r) { f.y = f.r; f.vy = Math.abs(f.vy); } if (f.y > H - f.r) { f.y = H - f.r; f.vy = -Math.abs(f.vy); }
+      if (Math.random() < dt * .8) { const a = Math.atan2(f.vy, f.vx) + (Math.random() - .5) * 1.2, sp = Math.hypot(f.vx, f.vy); f.vx = Math.cos(a) * sp; f.vy = Math.sin(a) * sp; } }
+    parts = parts.filter(p => (p.life -= dt) > 0); floats = floats.filter(p => (p.life -= dt) > 0);
+    ctx.drawImage(bg, 0, 0, W, H);
+    for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .92; p.vy *= .92; ctx.globalAlpha = Math.max(0, p.life / .5); ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1; foes.forEach(drawStatic);
+    ctx.font = '800 20px Rubik, sans-serif'; ctx.textAlign = 'center';
+    for (const p of floats) { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = '#ffd23f'; ctx.fillText(p.text, p.x, p.y - (1 - p.life) * 30); }
+    ctx.globalAlpha = 1; $('#sT').textContent = Math.ceil(timeLeft);
+    requestAnimationFrame(frame);
+  }
+  cv.addEventListener('pointerdown', e => {
+    if (!running) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    let hit = -1, best = 1e9; foes.forEach((f, i) => { const d = Math.hypot(f.x - x, f.y - y); if (d < f.r + 14 && d < best) { best = d; hit = i; } });
+    if (hit < 0) return;
+    const f = foes[hit], now = performance.now(); combo = now - lastZap < 1300 ? combo + 1 : 1; lastZap = now; bestCombo = Math.max(bestCombo, combo); zaps++; G.zapsTotal++;
+    const gain = Math.min(combo, 10); pts += gain; SFX.zap(combo);
+    const cols = ['#ffd23f', '#4de1ff', '#3dffb5', '#ff5c8a'];
+    if (!reduceMotion) for (let k = 0; k < 12; k++) { const a = Math.random() * 7, s = 80 + Math.random() * 160; parts.push({ x: f.x, y: f.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: .5, c: cols[k % 4] }); }
+    floats.push({ x: f.x, y: f.y - f.r, text: '+' + gain, life: .9 });
+    foes.splice(hit, 1);
+    if (f.r > 16) { const nr = f.r * .66; foes.push(mk(f.x - nr / 2, f.y, nr), mk(f.x + nr / 2, f.y, nr)); }
+    if (!foes.length) { waves++; pts += 50; floats.push({ x: W / 2, y: H / 2, text: 'WAVE CLEARED +50', life: 1.2 }); foes.push(mk(Math.random() * (W - 100) + 50, Math.random() * (H - 100) + 50, 46)); tone(523, .15, 'triangle', .06); tone(784, .2, 'triangle', .06, 0, .1); }
+    if (zaps % 15 === 0 && G.shields < 3) { G.shields++; floats.push({ x: W / 2, y: 60, text: '🛡️ +1 SHIELD', life: 1.2 }); $('#sS').textContent = G.shields; }
+    $('#sZ').textContent = zaps; $('#sC').textContent = '×' + combo;
+  });
+  const onR = () => { if (G.screen === 'smash' && running) resize(); }; window.addEventListener('resize', onR);
+  requestAnimationFrame(t => { last = t; frame(t); });
+  function smashDone() {
+    window.removeEventListener('resize', onR); bumpScore(pts); SFX.win();
+    setScreen('smash', '<div class="grid2"><div class="card"><div class="kicker">Static Smash results</div><h2 style="font-size:34px;margin:6px 0 12px">⚡ ' + (zaps >= 30 ? 'Absolute zap machine!' : zaps >= 15 ? 'Nice zapping!' : 'He got away… for now.') + '</h2>' +
+      '<div class="grid3"><div class="card"><div class="stat">' + zaps + '<small>zaps</small></div></div><div class="card"><div class="stat">×' + bestCombo + '<small>best combo</small></div></div><div class="card"><div class="stat">+' + pts + '<small>points</small></div></div></div>' +
+      '<p class="sub" style="margin-top:12px">' + (G.shields > shieldsStart ? '🛡️ You earned ' + (G.shields - shieldsStart) + ' shield' + (G.shields - shieldsStart > 1 ? 's' : '') + '. ' : '') + 'Shields: ' + G.shields + '/3. ' + (waves ? 'Waves cleared: ' + waves + '.' : '') + '</p>' +
+      '<div class="row" style="margin-top:14px"><button class="btn" id="go" type="button">Next circuit ➜</button></div></div>' +
+      '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG(zaps >= 15 ? 'hurt' : 'laugh', 180) + '</div></div></div>');
+    $('#go').onclick = () => { G.circuit++; circuitIntro(); };
+  }
+}
+
+// ================= end =================
+function endScreen() {
+  const acc = G.moves + G.mistakes ? Math.round(100 * G.moves / (G.moves + G.mistakes)) : 100;
+  const key = 'sc-best-' + G.mode, prev = +store.get(key, '0'), newBest = G.score > prev; if (newBest) store.set(key, String(G.score));
+  netPush('done', G.score);
+  setScreen('end', '<div class="grid2"><div class="card"><div class="kicker">All 5 circuits restored · ' + G.mode.toUpperCase() + '</div><h2 style="font-size:38px;margin:6px 0 8px">🏁 Static is defeated!</h2>' +
+    '<div style="font-size:60px;font-weight:800;color:var(--volt)">' + G.score.toLocaleString() + '</div><p class="note" style="margin-top:0">points' + (newBest ? ' · <b style="color:var(--hot)">new personal best!</b>' : ' · your best: ' + prev.toLocaleString()) + '</p>' +
+    '<div class="grid3"><div class="card"><div class="stat">' + acc + '%<small>move accuracy</small></div></div><div class="card"><div class="stat">' + G.perfect + '/' + G.puzzlesDone + '<small>perfect arrays</small></div></div><div class="card"><div class="stat">' + G.bestStreak + '<small>best streak</small></div></div></div>' +
+    '<div id="endlb"></div><div class="row" style="margin-top:14px"><button class="btn" id="again" type="button">Play again ⚡</button><button class="btn ghost" id="sw" type="button">Try ' + (G.mode === 'sl' ? 'HL' : 'SL') + ' mode</button></div></div>' +
+    '<div style="text-align:center"><div class="bounce" style="display:inline-block">' + staticSVG('hurt', 220) + '</div><p class="note">“Fine. FINE. Your arrays are sorted. I’ll be in the recycle bin.”</p></div></div>');
+  SFX.win(); $('#again').onclick = titleScreen; $('#sw').onclick = () => { G.mode = G.mode === 'sl' ? 'hl' : 'sl'; store.set('sc-mode', G.mode); titleScreen(); };
+  renderLbInto($('#endlb'), true);
+}
+
+// ================= class leaderboard (Firebase) =================
+const NET = { db: null, ref: null, rows: [], status: 'off', pid: null };
+function loadScript(src) { return new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = () => rej(new Error('load')); document.head.appendChild(el); }); }
+function roomPath() { return 'rooms/sc-' + G.mode + '-' + G.cls + '/info'; }
+async function netJoin() {
+  NET.rows = []; NET.status = 'off'; if (NET.ref) { try { NET.ref.off(); } catch (e) {} NET.ref = null; }
+  if (!G.cls || !window.FIREBASE_CONFIG) return;
+  NET.status = 'connecting';
+  try {
+    for (const u of ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'])
+      if (!(window.firebase && window.firebase.database)) await loadScript(u);
+    const fb = window.firebase, app = fb.apps.find(a => a.name === 'sc') || fb.initializeApp(window.FIREBASE_CONFIG, 'sc');
+    NET.db = app.database();
+    let pid = store.get('sc-pid', ''); if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 12); store.set('sc-pid', pid); } NET.pid = pid;
+    NET.ref = NET.db.ref(roomPath());
+    NET.ref.on('value', snap => {
+      const v = snap.val() || {};
+      NET.rows = Object.keys(v).map(id => ({ me: id === NET.pid, n: String((v[id] && v[id].nick) || '?').slice(0, 16), s: Math.max(0, Math.min(1e7, Math.floor(+(v[id] && v[id].score) || 0))), st: String((v[id] && v[id].stage) || '').slice(0, 8) })).sort((a, b) => b.s - a.s);
+      NET.status = 'on'; document.querySelectorAll('[data-lb]').forEach(el => renderLbInto(el, el.dataset.lb === 'end'));
+    }, () => { NET.status = 'fail'; });
+  } catch (e) { NET.status = 'fail'; }
+}
+function netPush(stage, finalScore) {
+  if (!NET.db || !NET.pid) return;
+  const live = finalScore !== undefined ? finalScore : G.score, mine = NET.rows.find(r => r.me);
+  if (mine && mine.st === 'done' && mine.s > live) return;
+  try { NET.db.ref(roomPath() + '/' + NET.pid).set({ nick: G.nick, nm: G.nick, score: live, stage }).catch(() => {}); } catch (e) {}
+}
+function renderLbInto(el, isEnd) {
+  if (!el) return; el.dataset.lb = isEnd ? 'end' : 'modal';
+  if (!G.cls) { el.innerHTML = isEnd ? '<p class="note" style="margin-top:12px">Add a class code on the title screen to compare scores with your classmates.</p>' : '<p class="sub">You’re playing without a class code. Add one on the title screen to compare scores with your class!</p>'; return; }
+  if (NET.status === 'fail') { el.innerHTML = '<p class="note" style="margin-top:12px">Couldn’t reach the class leaderboard (maybe the school network blocks it). Your score still counts on this device.</p>'; return; }
+  if (NET.status !== 'on') { el.innerHTML = '<p class="note" style="margin-top:12px">Connecting to the class leaderboard…</p>'; return; }
+  const ST = { c1: 'Circuit 1', c2: 'Circuit 2', c3: 'Circuit 3', c4: 'Circuit 4', c5: 'Circuit 5', done: 'Finished' };
+  el.innerHTML = '<div class="kicker" style="margin-top:14px">Class ' + esc(G.cls.toUpperCase()) + ' · ' + G.mode.toUpperCase() + '</div><ol class="lb">' +
+    (NET.rows.slice(0, 15).map((r, i) => '<li class="' + (r.me ? 'me' : '') + '"><span>' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1)) + '</span><span>' + esc(r.n) + (r.me ? ' (you)' : '') + '</span><span class="note">' + (ST[r.st] || '') + '</span><span class="s">' + r.s.toLocaleString() + '</span></li>').join('') || '<li><span></span><span class="note">No scores yet. Be the first!</span><span></span><span></span></li>') + '</ol>';
+}
+function showLeaderboard() {
+  const m = $('#modal'); m.innerHTML = '<div class="card"><h2 style="font-size:24px">🏆 Class leaderboard</h2><div id="mlb"></div><div class="row" style="margin-top:12px"><button class="btn" id="mclose" type="button">Close</button></div></div>';
+  m.hidden = false; renderLbInto($('#mlb'), false);
+  $('#mclose').onclick = () => { m.hidden = true; m.innerHTML = ''; }; m.onclick = e => { if (e.target === m) { m.hidden = true; m.innerHTML = ''; } };
+}
+
+// test hooks (used by the automated checks; harmless in class)
+window.SC = { G, get P() { return P; }, act, expected, startPuzzle, circuitIntro, finishPuzzle, posOf, smashIntro, endScreen };
+titleScreen();
+})();
+</script>
+</body>
+</html>

@@ -26,7 +26,7 @@ Every step is checked against the real algorithm. A wrong move explains what sho
 **The addictive bits:**
 - **The walls:** a constant ticking threat. Correct moves buy time, mistakes cost 6 seconds, and the leftover time is bonus points
 - **Streak multiplier:** ×1.5 at 5 correct moves in a row, ×2 at 10, ×3 at 20, with rising pitch on every move
-- **Boulder run** (25 seconds between chambers): switch lanes to dodge stones, jump logs and pits, grab gold. Each stumble lets the boulder roll closer, and three flattens you. Every 12 coins earns a 🪵 **wedge** (max 3), which jams the chamber walls for 12 seconds
+- **Boulder run** (25 seconds between chambers): a detailed 3D temple corridor (torch-lit carvings, idol alcoves, vines, collapsed rubble) with a jointed explorer. Switch lanes to dodge carved blocks, jump fallen columns and pits, slide under low beams, grab gold and rare gems (worth 5). Each stumble lets the boulder roll closer, and three flattens you. Every 12 coins earns a 🪵 **wedge** (max 3), which jams the chamber walls for 12 seconds
 
 ## Algorithm conventions (shown to students in the game)
 

@@ -100,7 +100,8 @@ window.FIREBASE_CONFIG = {
   ol.lb li:nth-child(odd) { background: rgba(240,191,76,.06); } ol.lb li.me { background: rgba(240,191,76,.18); font-weight: 700; } ol.lb .s { font-weight: 800; color: var(--gold); }
   .runhud { position: absolute; left: 12px; right: 12px; top: calc(var(--barH, 56px) + 6px); display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .runpad { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; gap: 14px; }
-  .runpad button { width: 86px; height: 70px; font-size: 26px; border-radius: 18px; }
+  .runpad button { width: 80px; height: 68px; font-size: 26px; border-radius: 18px; }
+  @media (max-width: 420px) { .runpad { gap: 8px; } .runpad button { width: 70px; height: 60px; } }
   .hearts { letter-spacing: 2px; }
   @media (max-width: 1100px) { .pcode { display: none; } .pcode.open { display: block; } }
   @media (max-width: 640px) { .bar { flex-wrap: nowrap; gap: 5px; padding: 8px; } .bar.playing .logo .word { display: none; } .bar .lbl, .bar .modechip { display: none; } .iconbtn { padding: 5px 7px; font-size: 15px; }
@@ -438,7 +439,7 @@ function howTo() {
     '<div class="rule"><b>Binary search:</b> click the MID stone to lift it, then drop the half that can’t hold the target.</div>' +
     '<div class="rule"><b>The walls:</b> correct moves shove them back. Mistakes make them lurch in. If they reach the stones, you’re crushed and get a fresh row.</div>' +
     '<div class="rule"><b>Streak:</b> correct moves in a row raise your multiplier (×1.5 at 5, ×2 at 10, ×3 at 20).</div>' +
-    '<div class="rule"><b>Boulder run:</b> between chambers, dodge and jump while the boulder chases you. Every 12 gold coins earns a 🪵 wedge, which jams the walls when you’re in trouble.</div>' +
+    '<div class="rule"><b>Boulder run:</b> between chambers, dodge, jump and slide while the boulder chases you. Gems are worth 5 coins. Every 12 gold coins earns a 🪵 wedge, which jams the walls when you’re in trouble.</div>' +
     '<div class="row" style="margin-top:14px"><button class="btn" id="mclose" type="button">Got it</button></div></div>';
   m.hidden = false; $('#mclose').onclick = () => { m.hidden = true; m.innerHTML = ''; }; m.onclick = e => { if (e.target === m) { m.hidden = true; m.innerHTML = ''; } };
 }
@@ -724,89 +725,271 @@ function finishPuzzle() {
 }
 
 // ================= Boulder run (the mindless bit) =================
-const run = new THREE.Scene(); run.background = new THREE.Color(0x0b0704); run.fog = new THREE.Fog(0x0b0704, 14, 60);
-const runCam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .1, 120);
-run.add(new THREE.HemisphereLight(0xe2c79b, 0x24170a, .9));
-const runSun = new THREE.DirectionalLight(0xffe2b0, 1.4); runSun.position.set(-3, 10, 6); run.add(runSun);
-const runTorch = new THREE.PointLight(0xff9a40, 12, 22, 1.5); runTorch.position.set(0, 3, 1); run.add(runTorch);
-const SEG = 10, NSEG = 8, LANES = [-1.7, 0, 1.7];
-const runFloorMat = new THREE.MeshStandardMaterial({ map: tex(floorCanvas(), 2, 2.5), roughness: .92 });
-const runWallMat = new THREE.MeshStandardMaterial({ map: tex(brickCanvas([116, 90, 62]), 2.5, 1), roughness: .92 });
-const pillarMat = new THREE.MeshStandardMaterial({ color: 0x7a6044, roughness: .9 });
-const segs = [];
-for (let s = 0; s < NSEG; s++) {
-  const g = new THREE.Group();
-  const f = new THREE.Mesh(new THREE.BoxGeometry(6.2, .3, SEG), runFloorMat); f.position.y = -.15; g.add(f);
-  for (const sx of [-1, 1]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(.6, 4.6, SEG), runWallMat); w.position.set(sx * 3.4, 2.3, 0); g.add(w);
-    const p = new THREE.Mesh(new THREE.BoxGeometry(.8, 4.8, .8), pillarMat); p.position.set(sx * 3.0, 2.4, -SEG / 2 + .4); g.add(p);
-    if (s % 2 === 0) { const fl = new THREE.Mesh(new THREE.ConeGeometry(.13, .4, 8), new THREE.MeshBasicMaterial({ color: 0xffa640 })); fl.position.set(sx * 2.55, 3.1, -SEG / 2 + .4); g.add(fl);
-      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); gl.scale.set(1.6, 1.6, 1); gl.position.copy(fl.position); g.add(gl); }
-  }
-  const beam = new THREE.Mesh(new THREE.BoxGeometry(6.8, .6, .8), pillarMat); beam.position.set(0, 4.9, -SEG / 2 + .4); g.add(beam);
-  g.position.z = -s * SEG + 4; run.add(g); segs.push(g);
+const run = new THREE.Scene(); run.background = new THREE.Color(0x080503); run.fog = new THREE.FogExp2(0x0a0604, .03);
+const runCam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .1, 140);
+run.add(new THREE.HemisphereLight(0xe8cfa2, 0x1c1208, .6));
+const runSun = new THREE.DirectionalLight(0xffdcae, 1.0); runSun.castShadow = true; runSun.shadow.mapSize.set(1024, 1024);
+Object.assign(runSun.shadow.camera, { left: -5, right: 5, top: 7, bottom: -7, near: 1, far: 30 }); run.add(runSun, runSun.target);
+const runTorch = new THREE.PointLight(0xffa24a, 12, 16, 1.6); run.add(runTorch);
+const SEG = 10, NSEG = 9, LANES = [-1.7, 0, 1.7];
+
+// --- little noise helpers for craggy rocks ---
+function hash3(x, y, z) { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); }
+function vnoise(x, y, z) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi, sm = t => t * t * (3 - 2 * t), u = sm(xf), v = sm(yf), w = sm(zf);
+  const c = (a, b, d) => hash3(xi + a, yi + b, zi + d), L = (a, b, t) => a + (b - a) * t;
+  return L(L(L(c(0, 0, 0), c(1, 0, 0), u), L(c(0, 1, 0), c(1, 1, 0), u), v), L(L(c(0, 0, 1), c(1, 0, 1), u), L(c(0, 1, 1), c(1, 1, 1), u), v), w);
 }
-function makeExplorer() {
-  const g = new THREE.Group(), skin = new THREE.MeshStandardMaterial({ color: 0xe0b48a, roughness: .7 }), shirt = new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: .8 }),
-    pants = new THREE.MeshStandardMaterial({ color: 0x5b4127, roughness: .8 }), hat = new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: .7 });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(.28, .5, 4, 10), shirt); body.position.y = 1.05; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(.23, 16, 12), skin); head.position.y = 1.65; g.add(head);
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(.42, .42, .04, 20), hat); brim.position.y = 1.8; g.add(brim);
-  const crown = new THREE.Mesh(new THREE.CylinderGeometry(.2, .25, .22, 16), hat); crown.position.y = 1.92; g.add(crown);
-  const bag = new THREE.Mesh(new THREE.BoxGeometry(.22, .26, .12), hat); bag.position.set(.3, .9, 0); g.add(bag);
-  const legs = [], arms = [];
-  for (const sx of [-1, 1]) {
-    const l = new THREE.Mesh(new THREE.BoxGeometry(.16, .6, .18), pants); l.geometry.translate(0, -.3, 0); l.position.set(sx * .13, .72, 0); g.add(l); legs.push(l);
-    const a = new THREE.Mesh(new THREE.BoxGeometry(.12, .5, .14), shirt); a.geometry.translate(0, -.25, 0); a.position.set(sx * .38, 1.3, 0); g.add(a); arms.push(a);
+function rockGeo(r, detail = 2, amp = .18, seed = 0) {
+  const g = new THREE.IcosahedronGeometry(r, detail), p = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).normalize();
+    const d = 1 + amp * ((vnoise(v.x * 2.2 + seed, v.y * 2.2, v.z * 2.2) - .5) * 2 + (vnoise(v.x * 6, v.y * 6 + seed, v.z * 6) - .5) * .7);
+    p.setXYZ(i, v.x * r * d, v.y * r * d, v.z * r * d); }
+  g.computeVertexNormals(); return g;
+}
+// --- textures with relief (used as colour + bump) ---
+function carvedCanvas() {
+  const c = brickCanvas([118, 92, 64]), x = c.getContext('2d');
+  x.fillStyle = 'rgba(20,12,4,.55)'; x.fillRect(96, 120, 320, 272); x.fillStyle = 'rgb(104,82,58)'; x.fillRect(108, 132, 296, 248); speckle(x, 512, 512, 600, .2, .1);
+  x.strokeStyle = 'rgba(25,15,6,.9)'; x.lineWidth = 7; x.lineCap = 'round';
+  const eye = (cx, cy) => { x.beginPath(); x.ellipse(cx, cy, 34, 18, 0, 0, 7); x.stroke(); x.beginPath(); x.arc(cx, cy, 8, 0, 7); x.fill(); x.beginPath(); x.moveTo(cx - 10, cy + 18); x.lineTo(cx - 20, cy + 46); x.stroke(); };
+  x.fillStyle = 'rgba(25,15,6,.9)'; eye(256, 190);
+  for (let k = 0; k < 4; k++) { const gx = 150 + k * 70; x.beginPath(); x.moveTo(gx, 330); x.lineTo(gx + 20, 290); x.lineTo(gx + 40, 330); x.stroke(); }
+  x.beginPath(); for (let k = 0; k < 9; k++) x.lineTo(130 + k * 31, 260 + (k % 2 ? -14 : 14)); x.stroke();
+  x.strokeStyle = 'rgba(255,225,170,.18)'; x.lineWidth = 3; x.strokeRect(112, 136, 288, 240);
+  return c;
+}
+function detailFloorCanvas() {
+  const c = floorCanvas(), x = c.getContext('2d'); x.strokeStyle = 'rgba(15,9,3,.7)'; x.lineWidth = 2;
+  for (let k = 0; k < 14; k++) { let px = Math.random() * 512, py = Math.random() * 512; x.beginPath(); x.moveTo(px, py); for (let s = 0; s < 5; s++) { px += (Math.random() - .5) * 60; py += (Math.random() - .5) * 60; x.lineTo(px, py); } x.stroke(); }
+  for (let k = 0; k < 120; k++) { const px = Math.random() * 512, py = Math.random() * 512, r = Math.random() * 4 + 2; x.fillStyle = 'rgba(150,125,95,.5)'; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); x.fillStyle = 'rgba(20,12,4,.5)'; x.beginPath(); x.arc(px + 1, py + 1.5, r, 0, Math.PI); x.fill(); }
+  return c;
+}
+function mossCanvas() { const [c, x] = cnv(256, 128); for (let k = 0; k < 160; k++) { const px = Math.random() * 256, py = 128 - Math.pow(Math.random(), 2) * 128, r = Math.random() * 10 + 3; x.fillStyle = 'hsla(' + (85 + Math.random() * 30) + ',45%,' + (22 + Math.random() * 15) + '%,' + (.5 + Math.random() * .5) + ')'; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill(); } return c; }
+function webCanvas() { const [c, x] = cnv(256, 256); x.strokeStyle = 'rgba(230,225,215,.55)'; x.lineWidth = 1.5; for (let a = 0; a <= 8; a++) { const t = a / 8 * Math.PI / 2; x.beginPath(); x.moveTo(0, 0); x.lineTo(Math.cos(t) * 256, Math.sin(t) * 256); x.stroke(); }
+  for (let r = 30; r < 250; r += 26) { x.beginPath(); for (let a = 0; a <= 8; a++) { const t = a / 8 * Math.PI / 2, rr = r + Math.sin(a * 2.3) * 6; x.lineTo(Math.cos(t) * rr, Math.sin(t) * rr); } x.stroke(); } return c; }
+function coinCanvas() { const [c, x] = cnv(128, 128); const g = x.createRadialGradient(54, 50, 6, 64, 64, 64); g.addColorStop(0, '#fff0a8'); g.addColorStop(.6, '#f2bd38'); g.addColorStop(1, '#a8740e'); x.fillStyle = g; x.beginPath(); x.arc(64, 64, 63, 0, 7); x.fill();
+  x.strokeStyle = '#8a5d0a'; x.lineWidth = 6; x.beginPath(); x.arc(64, 64, 52, 0, 7); x.stroke(); x.font = '800 54px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = 'rgba(255,248,210,.6)'; x.fillText('Σ', 66, 68); x.fillStyle = '#8a5d0a'; x.fillText('Σ', 64, 66); return c; }
+function fluteCanvas() { const [c, x] = cnv(256, 64); x.fillStyle = '#9c8466'; x.fillRect(0, 0, 256, 64); for (let k = 0; k < 16; k++) { const g = x.createLinearGradient(k * 16, 0, k * 16 + 16, 0); g.addColorStop(0, '#6e5a42'); g.addColorStop(.5, '#b59e7e'); g.addColorStop(1, '#6e5a42'); x.fillStyle = g; x.fillRect(k * 16, 0, 16, 64); } speckle(x, 256, 64, 300, .25, .1); return c; }
+function puffTexture() { const [c, x] = cnv(64, 64); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(225,200,160,.8)'); g.addColorStop(.5, 'rgba(200,170,130,.35)'); g.addColorStop(1, 'rgba(200,170,130,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const bumpTex = (c, rx = 1, ry = 1) => tex(c, rx, ry);
+
+// --- shared materials ---
+const RM = {
+  floor: (() => { const t = bumpTex(detailFloorCanvas(), 2, 2.5); return new THREE.MeshStandardMaterial({ map: t, bumpMap: t, bumpScale: 2.5, roughness: .92 }); })(),
+  wall: (() => { const t = bumpTex(brickCanvas([116, 90, 62]), 2.5, 1); return new THREE.MeshStandardMaterial({ map: t, bumpMap: t, bumpScale: 3, roughness: .92 }); })(),
+  carved: (() => { const t = bumpTex(carvedCanvas()); return new THREE.MeshStandardMaterial({ map: t, bumpMap: t, bumpScale: 4, roughness: .9 }); })(),
+  ceiling: new THREE.MeshStandardMaterial({ color: 0x2a1c10, roughness: 1 }),
+  wood: (() => { const [c, x] = cnv(128, 32); x.fillStyle = '#5e3d20'; x.fillRect(0, 0, 128, 32); for (let k = 0; k < 40; k++) { x.strokeStyle = 'rgba(30,18,8,' + Math.random() * .6 + ')'; x.beginPath(); const yy = Math.random() * 32; x.moveTo(0, yy); x.bezierCurveTo(40, yy + 3, 80, yy - 3, 128, yy); x.stroke(); } const t = tex(c); return new THREE.MeshStandardMaterial({ map: t, bumpMap: t, bumpScale: 2, roughness: .85 }); })(),
+  iron: new THREE.MeshStandardMaterial({ color: 0x3b3530, metalness: .7, roughness: .45 }),
+  rock: (() => { const t = tex(boulderCanvas(), 2, 1); return new THREE.MeshStandardMaterial({ map: t, bumpMap: t, bumpScale: 3, roughness: 1, flatShading: true }); })(),
+  stone: new THREE.MeshStandardMaterial({ color: 0x8d7556, roughness: .95, flatShading: true }),
+  idol: new THREE.MeshStandardMaterial({ color: 0x7d7a6e, roughness: .9, flatShading: true }),
+  dark: new THREE.MeshBasicMaterial({ color: 0x030201 }),
+  moss: new THREE.MeshStandardMaterial({ map: tex(mossCanvas()), transparent: true, alphaTest: .25, roughness: 1, depthWrite: false }),
+  web: new THREE.MeshBasicMaterial({ map: tex(webCanvas()), transparent: true, depthWrite: false, side: THREE.DoubleSide }),
+  vine: new THREE.MeshStandardMaterial({ color: 0x3f5a22, roughness: .9 }),
+  leaf: new THREE.MeshStandardMaterial({ color: 0x4f7a2a, roughness: .8, flatShading: true }),
+  clay: new THREE.MeshStandardMaterial({ color: 0x9a5a34, roughness: .8 }),
+  flame: new THREE.MeshBasicMaterial({ color: 0xffa640 }),
+  flute: (() => { const t = tex(fluteCanvas(), 1, 1); return new THREE.MeshStandardMaterial({ map: t, bumpMap: t, bumpScale: 4, roughness: .9 }); })(),
+  gold: new THREE.MeshStandardMaterial({ color: 0xe0a52c, metalness: .85, roughness: .3, emissive: 0x5a3a00, emissiveIntensity: .5 }),
+  coinFace: (() => { const t = tex(coinCanvas()); return new THREE.MeshStandardMaterial({ map: t, metalness: .7, roughness: .35, emissive: 0x5a3a00, emissiveIntensity: .45 }); })()
+};
+function boulderCanvas() { const [c, x] = cnv(256, 256); x.fillStyle = '#6f5a43'; x.fillRect(0, 0, 256, 256); speckle(x, 256, 256, 1800, .35, .15); x.strokeStyle = 'rgba(30,20,10,.6)'; x.lineWidth = 3; for (let k = 0; k < 12; k++) { x.beginPath(); x.moveTo(Math.random() * 256, Math.random() * 256); for (let s = 0; s < 4; s++) x.lineTo(Math.random() * 256, Math.random() * 256); x.stroke(); } return c; }
+const puffTex = puffTexture();
+
+// --- corridor pieces ---
+const GEO = {
+  floor: new THREE.BoxGeometry(6.4, .3, SEG), wall: new THREE.BoxGeometry(.6, 5.2, SEG), ceil: new THREE.BoxGeometry(7.6, .6, SEG),
+  post: new THREE.BoxGeometry(.45, 5, .45), beam: new THREE.BoxGeometry(7, .45, .5), bracket: new THREE.BoxGeometry(.52, .14, .52),
+  panel: new THREE.PlaneGeometry(2.6, 2.2), pebble: rockGeo(.12, 1, .3, 3), rubble: rockGeo(.35, 1, .3, 7), rubbleBig: rockGeo(.6, 1, .28, 11),
+  stal: new THREE.ConeGeometry(.16, .9, 6), moss: new THREE.PlaneGeometry(2.4, .8), web: new THREE.PlaneGeometry(1.4, 1.4),
+  vine: new THREE.CylinderGeometry(.03, .03, 1, 5), leaf: new THREE.IcosahedronGeometry(.12, 0), urn: null, sconce: new THREE.CylinderGeometry(.13, .08, .25, 8), flame: new THREE.ConeGeometry(.14, .42, 8)
+};
+GEO.urn = new THREE.LatheGeometry([[0, 0], [.18, .02], [.26, .2], [.24, .42], [.14, .55], [.12, .62], [.17, .68], [0, .68]].map(p => new THREE.Vector2(p[0], p[1])), 14);
+const mesh = (g, m, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); return o; };
+function idolHead() {
+  const g = new THREE.Group();
+  g.add(mesh(new THREE.BoxGeometry(.5, .5, .5), RM.stone, 0, .25, 0));
+  g.add(mesh(new THREE.BoxGeometry(.62, 1, .58), RM.idol, 0, 1, 0));
+  g.add(mesh(new THREE.BoxGeometry(.66, .14, .2), RM.idol, 0, 1.2, .28));
+  g.add(mesh(new THREE.BoxGeometry(.14, .34, .2), RM.idol, 0, .98, .34));
+  for (const s of [-1, 1]) { const e = mesh(new THREE.BoxGeometry(.14, .07, .05), RM.dark, s * .16, 1.1, .3); g.add(e); }
+  g.add(mesh(new THREE.BoxGeometry(.3, .06, .05), RM.dark, 0, .74, .3));
+  return g;
+}
+function makeSegment() {
+  const g = new THREE.Group(), base = new THREE.Group(); g.add(base);
+  const f = mesh(GEO.floor, RM.floor, 0, -.15, 0); f.receiveShadow = true; base.add(f);
+  base.add(mesh(GEO.ceil, RM.ceiling, 0, 5.4, 0));
+  for (const s of [-1, 1]) {
+    const w = mesh(GEO.wall, RM.wall, s * 3.5, 2.5, 0); w.receiveShadow = true; base.add(w);
+    base.add(mesh(GEO.post, RM.wood, s * 3.0, 2.5, -SEG / 2 + .4));
+    for (const y of [.6, 4.4]) base.add(mesh(GEO.bracket, RM.iron, s * 3.0, y, -SEG / 2 + .4));
+    const ms = mesh(GEO.moss, RM.moss, s * 3.19, .4, (Math.random() - .5) * 6); ms.rotation.y = -s * Math.PI / 2; base.add(ms);
   }
-  g.userData = { legs, arms, mats: [skin, shirt, pants, hat] }; return g;
+  base.add(mesh(GEO.beam, RM.wood, 0, 4.95, -SEG / 2 + .4));
+  for (let k = 0; k < 7; k++) { const p = mesh(GEO.pebble, RM.stone, (Math.random() - .5) * 5.6, .02, (Math.random() - .5) * SEG); p.rotation.set(Math.random() * 3, Math.random() * 3, 0); p.scale.setScalar(.6 + Math.random()); base.add(p); }
+  const variants = [];
+  // 0: torches + carved panels
+  { const v = new THREE.Group();
+    for (const s of [-1, 1]) {
+      const pnl = mesh(GEO.panel, RM.carved, s * 3.19, 2.3, 1.2); pnl.rotation.y = -s * Math.PI / 2; v.add(pnl);
+      const sc = mesh(GEO.sconce, RM.iron, s * 3.05, 3.2, -1.6); v.add(sc);
+      const fl = mesh(GEO.flame, RM.flame, s * 3.05, 3.5, -1.6); v.add(fl); v.userData.flames = (v.userData.flames || []).concat(fl);
+      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); gl.scale.set(1.7, 1.7, 1); gl.position.set(s * 3.0, 3.55, -1.6); v.add(gl);
+    }
+    variants.push(v); }
+  // 1: idol alcoves + urns
+  { const v = new THREE.Group();
+    for (const s of [-1, 1]) {
+      const al = mesh(new THREE.BoxGeometry(.2, 2.2, 1.6), RM.dark, s * 3.12, 1.4, .5); v.add(al);
+      const id = idolHead(); id.position.set(s * 2.78, 0, .5); id.rotation.y = -s * Math.PI / 2; id.traverse(o => { if (o.isMesh) o.castShadow = true; }); v.add(id);
+      for (let k = 0; k < 2; k++) { const u = mesh(GEO.urn, RM.clay, s * 2.75, 0, -1.8 - k * .6); u.scale.setScalar(.8 + Math.random() * .4); v.add(u); }
+    }
+    variants.push(v); }
+  // 2: vines + cobwebs
+  { const v = new THREE.Group();
+    for (const s of [-1, 1]) for (let k = 0; k < 6; k++) {
+      const len = .8 + Math.random() * 2, vz = -4 + k * 1.5 + Math.random() * .5, vx = s * (2.6 + Math.random() * .5);
+      const vi = mesh(GEO.vine, RM.vine, vx, 5.1 - len / 2, vz); vi.scale.y = len; vi.rotation.z = (Math.random() - .5) * .15; v.add(vi);
+      for (let q = 0; q < 4; q++) { const lf = mesh(GEO.leaf, RM.leaf, vx + (Math.random() - .5) * .2, 5.1 - Math.random() * len, vz + (Math.random() - .5) * .2); lf.scale.set(1, .5, 1.4); lf.rotation.set(Math.random() * 3, Math.random() * 3, 0); v.add(lf); }
+    }
+    for (const s of [-1, 1]) { const wb = mesh(GEO.web, RM.web, s * 2.6, 4.45, 1.5); wb.rotation.set(0, s > 0 ? Math.PI / 2 : -Math.PI / 2, s > 0 ? Math.PI : -Math.PI / 2); v.add(wb); }
+    variants.push(v); }
+  // 3: collapse: rubble piles + stalactites
+  { const v = new THREE.Group();
+    for (const s of [-1, 1]) for (let k = 0; k < 5; k++) { const r = mesh(k % 2 ? GEO.rubbleBig : GEO.rubble, RM.rock, s * (2.7 + Math.random() * .3), .15 + Math.random() * .2, -3.5 + k * 1.7); r.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3); r.castShadow = true; v.add(r); }
+    for (let k = 0; k < 7; k++) { const st = mesh(GEO.stal, RM.stone, (Math.random() - .5) * 5, 4.75, (Math.random() - .5) * 9); st.rotation.x = Math.PI; st.scale.set(1, .6 + Math.random() * .9, 1); v.add(st); }
+    variants.push(v); }
+  variants.forEach(v => { v.visible = false; g.add(v); });
+  g.userData = { variants, cur: -1 };
+  return g;
+}
+function setVariant(g, k) { const u = g.userData; u.variants.forEach((v, i) => { v.visible = i === k; }); u.cur = k; }
+// a fixed pool of torch lights that follow the nearest torch sections (a fixed light count avoids shader rebuilds)
+const torchPool = [0, 1, 2].map(() => { const L = new THREE.PointLight(0xff9a40, 0, 11, 1.7); run.add(L); return L; });
+const segs = [];
+for (let s = 0; s < NSEG; s++) { const g = makeSegment(); g.position.z = -s * SEG + 4; setVariant(g, s % 4); run.add(g); segs.push(g); }
+
+// --- the explorer, with real joints ---
+function makeExplorer() {
+  const M = (c, r = .75, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+  const mats = { skin: M(0xd9a77c, .6), shirt: M(0xd8c59a), jacket: M(0x6b4423, .7), pants: M(0x8a7353), boots: M(0x3a2414, .6), hat: M(0x5a3b1f, .8), band: M(0x22150b), belt: M(0x2e1d10), gold: M(0xd9a441, .35, .7), whip: M(0x3b2614, .6), hair: M(0x3a2717, .9), eye: M(0x1a120c, .4) };
+  const g = new THREE.Group(), hips = new THREE.Group(); hips.position.y = .95; g.add(hips);
+  const torso = new THREE.Group(); hips.add(torso);
+  torso.add(mesh(new THREE.CapsuleGeometry(.25, .36, 4, 12), mats.jacket, 0, .36, 0));
+  torso.add(mesh(new THREE.BoxGeometry(.2, .3, .05), mats.shirt, 0, .48, .22));
+  const beltM = mesh(new THREE.CylinderGeometry(.255, .255, .08, 16), mats.belt, 0, .06, 0); torso.add(beltM);
+  torso.add(mesh(new THREE.BoxGeometry(.09, .07, .04), mats.gold, 0, .06, .26));
+  const strap = mesh(new THREE.BoxGeometry(.05, .72, .03), mats.belt, 0, .38, .25); strap.rotation.z = .75; torso.add(strap);
+  const strapB = mesh(new THREE.BoxGeometry(.05, .72, .03), mats.belt, 0, .38, -.25); strapB.rotation.z = -.75; torso.add(strapB);
+  torso.add(mesh(new THREE.BoxGeometry(.24, .26, .1), mats.whip, .3, .02, .02));
+  const whip = mesh(new THREE.TorusGeometry(.1, .025, 6, 16), mats.whip, -.27, .04, 0); whip.rotation.y = Math.PI / 2; torso.add(whip);
+  const neck = new THREE.Group(); neck.position.y = .7; torso.add(neck);
+  const head = new THREE.Group(); head.position.y = .14; neck.add(head);
+  head.add(mesh(new THREE.SphereGeometry(.19, 18, 14), mats.skin, 0, 0, 0));
+  const hairM = mesh(new THREE.SphereGeometry(.2, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mats.hair, 0, .02, -.02); hairM.rotation.x = -.4; head.add(hairM);
+  for (const s of [-1, 1]) { head.add(mesh(new THREE.SphereGeometry(.025, 8, 6), mats.eye, s * .07, .03, .17)); head.add(mesh(new THREE.SphereGeometry(.045, 8, 6), mats.skin, s * .19, 0, 0)); }
+  const nose = mesh(new THREE.ConeGeometry(.035, .08, 6), mats.skin, 0, -.02, .2); nose.rotation.x = Math.PI / 2; head.add(nose);
+  head.add(mesh(new THREE.BoxGeometry(.09, .015, .02), mats.eye, 0, -.09, .175));
+  const brim = mesh(new THREE.CylinderGeometry(.4, .42, .03, 24), mats.hat, 0, .15, 0); head.add(brim);
+  const crown = mesh(new THREE.LatheGeometry([[0, 0], [.22, 0], [.215, .12], [.18, .2], [.06, .19], [0, .17]].map(p => new THREE.Vector2(p[0], p[1])), 18), mats.hat, 0, .16, 0); head.add(crown);
+  head.add(mesh(new THREE.CylinderGeometry(.224, .224, .05, 18), mats.band, 0, .19, 0));
+  const arms = [], legs = [];
+  for (const s of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(s * .32, .58, 0); torso.add(sh);
+    sh.add(mesh(new THREE.CapsuleGeometry(.075, .2, 3, 8), mats.jacket, 0, -.15, 0));
+    const el = new THREE.Group(); el.position.y = -.32; sh.add(el);
+    el.add(mesh(new THREE.CapsuleGeometry(.065, .18, 3, 8), mats.jacket, 0, -.13, 0));
+    el.add(mesh(new THREE.SphereGeometry(.065, 10, 8), mats.skin, 0, -.29, 0));
+    arms.push({ sh, el });
+    const hp = new THREE.Group(); hp.position.set(s * .13, 0, 0); hips.add(hp);
+    hp.add(mesh(new THREE.CapsuleGeometry(.095, .26, 3, 8), mats.pants, 0, -.2, 0));
+    const kn = new THREE.Group(); kn.position.y = -.44; hp.add(kn);
+    kn.add(mesh(new THREE.CapsuleGeometry(.08, .24, 3, 8), mats.pants, 0, -.18, 0));
+    kn.add(mesh(new THREE.BoxGeometry(.15, .14, .26), mats.boots, 0, -.4, .04));
+    legs.push({ hp, kn });
+  }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  g.userData = { hips, torso, head, neck, arms, legs, mats: Object.values(mats) };
+  return g;
 }
 const explorer = makeExplorer(); run.add(explorer);
-const boulderC = cnv(256, 256); { const x = boulderC[1]; x.fillStyle = '#6f5a43'; x.fillRect(0, 0, 256, 256); speckle(x, 256, 256, 1600, .35, .15); x.strokeStyle = 'rgba(30,20,10,.6)'; x.lineWidth = 3; for (let k = 0; k < 9; k++) { x.beginPath(); x.moveTo(Math.random() * 256, Math.random() * 256); for (let s = 0; s < 4; s++) x.lineTo(Math.random() * 256, Math.random() * 256); x.stroke(); } }
-const boulder = new THREE.Mesh(new THREE.SphereGeometry(2.3, 28, 20), new THREE.MeshStandardMaterial({ map: tex(boulderC[0], 2, 1), roughness: 1 })); boulder.position.set(0, 2.3, 11); run.add(boulder);
-const coinGeo = new THREE.CylinderGeometry(.32, .32, .08, 20), coinMat = new THREE.MeshStandardMaterial({ color: 0xffc53d, metalness: .8, roughness: .3, emissive: 0x6b4a00, emissiveIntensity: .6 });
-const stoneGeo = new THREE.BoxGeometry(1.35, 1.7, .9), stoneMat = new THREE.MeshStandardMaterial({ map: tex(brickCanvas([130, 104, 74]), .5, .5), roughness: .9 });
-const logGeo = new THREE.CylinderGeometry(.3, .3, 1.45, 12), logMat = new THREE.MeshStandardMaterial({ color: 0x8a6a48, roughness: .9 });
-const pitGeo = new THREE.BoxGeometry(1.5, .05, 1.7), pitMat = new THREE.MeshBasicMaterial({ color: 0x050302 });
+const boulder = new THREE.Mesh(rockGeo(2.3, 4, .1, 5), RM.rock); boulder.castShadow = true; run.add(boulder);
+
+// --- dust puffs and falling pebbles ---
+const puffs = [];
+for (let k = 0; k < 70; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puffTex, transparent: true, depthWrite: false, opacity: 0 })); s.visible = false; run.add(s); puffs.push({ s, life: 0, max: 1, vx: 0, vy: 0, vz: 0, grow: 1 }); }
+let puffI = 0;
+function puff(x, y, z, size = .5, life = .7, vx = 0, vy = .4, vz = 0, op = .55, tint = 0xffffff) {
+  if (reduceMotion && Math.random() < .6) return;
+  const p = puffs[puffI = (puffI + 1) % puffs.length]; p.s.visible = true; p.s.position.set(x, y, z); p.s.scale.setScalar(size); p.s.material.opacity = op; p.s.material.color.setHex(tint);
+  Object.assign(p, { life, max: life, vx, vy, vz, grow: size * 1.6, op });
+}
+const pebbles = [];
+for (let k = 0; k < 10; k++) { const m = mesh(GEO.pebble, RM.stone); m.visible = false; m.scale.setScalar(1.4); run.add(m); pebbles.push({ m, vy: 0, on: false }); }
+
+// --- obstacles and loot ---
+const OB = {
+  stoneGeo: new THREE.BoxGeometry(1.35, 1.7, .9),
+  columnGeo: new THREE.CylinderGeometry(.34, .36, 1.4, 16),
+  pitGeo: new THREE.BoxGeometry(1.5, .04, 1.7), lipGeo: new THREE.BoxGeometry(1.7, .1, .14), lipSide: new THREE.BoxGeometry(.14, .1, 1.7),
+  beamGeo: new THREE.BoxGeometry(1.55, .32, .42), ropeGeo: new THREE.CylinderGeometry(.03, .03, 1, 6), bandGeo: new THREE.BoxGeometry(.1, .36, .46),
+  coinGeo: new THREE.CylinderGeometry(.3, .3, .07, 22), gemGeo: new THREE.OctahedronGeometry(.27, 0)
+};
+const gemMats = [0x2fe08f, 0xff4d6d, 0x5fb8ff].map(c => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .45, metalness: .2, roughness: .15, flatShading: true }));
+function makeObstacle(type) {
+  const g = new THREE.Group();
+  if (type === 'stone') { const b = mesh(OB.stoneGeo, RM.carved, 0, .85, 0); b.castShadow = true; g.add(b); for (let k = 0; k < 3; k++) { const r = mesh(GEO.pebble, RM.stone, (Math.random() - .5) * 1.4, .05, .5 + Math.random() * .3); r.scale.setScalar(1.5); g.add(r); } }
+  if (type === 'column') { const c = mesh(OB.columnGeo, RM.flute, 0, .36, 0); c.rotation.z = Math.PI / 2; c.castShadow = true; g.add(c); for (const s of [-1, 1]) { const e = mesh(GEO.rubble, RM.stone, s * .74, .3, 0); e.scale.set(.6, .9, .9); g.add(e); } }
+  if (type === 'pit') { g.add(mesh(OB.pitGeo, RM.dark, 0, .02, 0)); for (const s of [-1, 1]) { g.add(mesh(OB.lipGeo, RM.stone, 0, .05, s * .92)); g.add(mesh(OB.lipSide, RM.stone, s * .82, .05, 0)); } }
+  if (type === 'beam') { const b = mesh(OB.beamGeo, RM.wood, 0, 1.5, 0); b.castShadow = true; g.add(b); for (const s of [-1, 1]) { g.add(mesh(OB.bandGeo, RM.iron, s * .55, 1.5, 0)); const r = mesh(OB.ropeGeo, RM.vine, s * .6, 3.3, 0); r.scale.y = 3.4; g.add(r); } }
+  return g;
+}
+function makeCoin() { const m = new THREE.Mesh(OB.coinGeo, [RM.gold, RM.coinFace, RM.coinFace]); m.rotation.x = Math.PI / 2; return m; }
+function makeGem() { const g = new THREE.Group(); g.add(new THREE.Mesh(OB.gemGeo, gemMats[Math.floor(Math.random() * 3)])); const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xbff7ff })); gl.scale.set(1.1, 1.1, 1); g.add(gl); return g; }
+
 const R = { on: false, objs: [] };
 function runIntro() {
   activeScene = 'temple'; P = null;
   setScreen('runIntro', '<div class="center"><div class="panel pe"><div class="kicker">Between chambers</div><h2 style="font-size:34px;margin:6px 0 10px;color:var(--gold)">🪨 RUN!</h2>' +
-    '<p class="sub">You pried the door open, and the temple let loose a boulder. Survive 25 seconds. Switch lanes to dodge stones, jump logs and pits, and grab the gold. Every stumble lets the boulder roll closer. Three and it flattens you.</p>' +
-    '<div class="rule"><b>Controls:</b> ← → (or A D) switch lanes, ↑ or space jumps. Touchscreen or trackpad: swipe, or tap the left / middle / right of the screen.</div>' +
+    '<p class="sub">You pried the door open, and the temple let loose a boulder. Survive 25 seconds. Dodge carved blocks, jump fallen columns and pits, slide under low beams, and grab the gold. Gems are worth 5 coins. Every stumble lets the boulder roll closer. Three and it flattens you.</p>' +
+    '<div class="rule"><b>Controls:</b> ← → (or A D) switch lanes, ↑ or space jumps, ↓ or S slides. Touchscreen or trackpad: swipe, or use the buttons.</div>' +
     '<div class="rule"><b>Every 12 coins = 🪵 1 wedge</b> (max 3). Wedges jam the chamber walls and buy you 12 seconds. You have ' + G.wedges + '.</div>' +
     '<div class="row" style="margin-top:16px"><button class="btn" id="go" type="button">Run! 🏃</button></div></div></div>');
   $('#go').onclick = startRun;
 }
 function startRun() {
   activeScene = 'run'; runCam.aspect = innerWidth / innerHeight; runCam.updateProjectionMatrix();
-  setScreen('run', '<div class="runhud"><span class="chip">⏱ <b id="rT">25</b></span><span class="chip">🪙 <b id="rC">0</b></span><span class="chip">Combo <b id="rK">×1</b></span><span class="chip">🪵 <b id="rW">' + G.wedges + '</b></span><span class="chip">Stumbles <b class="hearts" id="rH">○○○</b></span></div>' +
-    '<div class="runpad"><button class="btn wood pe" id="bL" type="button" aria-label="Left">◀</button><button class="btn pe" id="bJ" type="button" aria-label="Jump">⤒</button><button class="btn wood pe" id="bR" type="button" aria-label="Right">▶</button></div>');
-  ['bL', 'bJ', 'bR'].forEach((id, i) => { $('#' + id).onpointerdown = e => { e.preventDefault(); e.stopPropagation(); runInput(['left', 'jump', 'right'][i]); }; });
+  setScreen('run', '<div class="runhud"><span class="chip">⏱ <b id="rT">25</b></span><span class="chip">🪙 <b id="rC">0</b></span><span class="chip">Combo <b id="rK">×1</b></span><span class="chip">📏 <b id="rD">0</b> m</span><span class="chip">🪵 <b id="rW">' + G.wedges + '</b></span><span class="chip">Stumbles <b class="hearts" id="rH">○○○</b></span></div>' +
+    '<div class="runpad"><button class="btn wood pe" id="bL" type="button" aria-label="Left">◀</button><button class="btn pe" id="bJ" type="button" aria-label="Jump">⤒</button><button class="btn jade pe" id="bS" type="button" aria-label="Slide">⤓</button><button class="btn wood pe" id="bR" type="button" aria-label="Right">▶</button></div>');
+  [['bL', 'left'], ['bJ', 'jump'], ['bS', 'slide'], ['bR', 'right']].forEach(([id, w]) => { $('#' + id).onpointerdown = e => { e.preventDefault(); e.stopPropagation(); runInput(w); }; });
   for (const o of R.objs) run.remove(o.mesh);
-  Object.assign(R, { on: true, t: 0, dur: 25, speed: 11, lane: 1, x: 0, y: 0, vy: 0, objs: [], farZ: 0, coins: 0, combo: 0, bestCombo: 0, hits: 0, inv: 0, boulderZ: 11, boulderGoal: 11, pts: 0, wedgesStart: G.wedges, ended: false, phase: 0 });
-  segs.forEach((g, s) => { g.position.z = -s * SEG + 4; });
-  explorer.position.set(0, 0, 0); explorer.rotation.set(0, Math.PI, 0); boulder.position.set(0, 2.3, 11);
+  Object.assign(R, { on: true, t: 0, dur: 25, intro: FAST ? 0 : 1.9, speed: 11, lane: 1, x: 0, y: 0, vy: 0, slide: 0, objs: [], farZ: 0, coins: 0, gems: 0, combo: 0, bestCombo: 0, hits: 0, inv: 0,
+    boulderZ: 17, boulderGoal: 11, pts: 0, wedgesStart: G.wedges, ended: false, phase: 0, dist: 0, lastStep: 0, pebbleT: 0 });
+  segs.forEach((g, s) => { g.position.z = -s * SEG + 4; setVariant(g, Math.floor(Math.random() * 4)); });
+  explorer.position.set(0, 0, 0); explorer.rotation.set(0, Math.PI, 0); boulder.position.set(0, 2.3, 17);
+  puffs.forEach(p => { p.life = 0; p.s.visible = false; }); pebbles.forEach(p => { p.on = false; p.m.visible = false; });
   for (let z = -24; z >= -68; z -= 11) { spawnRow(z); R.farZ = z; }
+  if (R.intro) { runCam.position.set(2.4, 1.9, -3.6); runCam.lookAt(0, 1.3, 4); SFX.rumble(); setTimeout(() => { if (G.screen === 'run') toast('RUN!'); }, 1500); }
 }
 function spawnRow(z) {
   const lanes = E.shuffle([0, 1, 2]), blocked = Math.random() < .45 && R.t > 4 ? 2 : 1, free = lanes.slice(blocked);
   for (const ln of lanes.slice(0, blocked)) {
-    const r = Math.random(), type = r < .4 ? 'stone' : r < .72 ? 'log' : 'pit';
-    let mesh;
-    if (type === 'stone') { mesh = new THREE.Mesh(stoneGeo, stoneMat); mesh.position.y = .85; }
-    if (type === 'log') { mesh = new THREE.Mesh(logGeo, logMat); mesh.rotation.z = Math.PI / 2; mesh.position.y = .3; }
-    if (type === 'pit') { mesh = new THREE.Mesh(pitGeo, pitMat); mesh.position.y = .03; }
-    mesh.position.x = LANES[ln]; mesh.position.z = z; run.add(mesh); R.objs.push({ kind: type, lane: ln, mesh, done: false });
+    const r = Math.random(), type = r < .3 ? 'stone' : r < .58 ? 'column' : r < .8 || R.t < 3 ? 'pit' : 'beam';
+    const m = makeObstacle(type); m.position.set(LANES[ln], 0, z); run.add(m); R.objs.push({ kind: type, lane: ln, mesh: m, done: false });
   }
-  const cl = free[Math.floor(Math.random() * free.length)];
-  for (let k = 0; k < 4; k++) { const m = new THREE.Mesh(coinGeo, coinMat); m.rotation.x = Math.PI / 2; m.position.set(LANES[cl], .75, z - 3 - k * 1.5); run.add(m); R.objs.push({ kind: 'coin', lane: cl, mesh: m, done: false }); }
+  const cl = free[Math.floor(Math.random() * free.length)], gemAt = Math.random() < .14 ? 3 : -1;
+  for (let k = 0; k < 4; k++) { const isGem = k === gemAt, m = isGem ? makeGem() : makeCoin(); m.position.set(LANES[cl], isGem ? .85 : .75, z - 3 - k * 1.5); run.add(m); R.objs.push({ kind: isGem ? 'gem' : 'coin', lane: cl, mesh: m, done: false }); }
 }
 function runInput(what) {
-  if (!R.on || R.ended) return;
+  if (!R.on || R.ended || R.intro > 0) return;
   if (what === 'left') R.lane = Math.max(0, R.lane - 1);
   if (what === 'right') R.lane = Math.min(2, R.lane + 1);
-  if (what === 'jump' && R.y <= .001) { R.vy = 9.2; SFX.jump(); }
+  if (what === 'jump' && R.y <= .001) { R.vy = 9.2; R.slide = 0; SFX.jump(); }
+  if (what === 'slide') { if (R.y > .001) R.vy = Math.min(R.vy, -9); R.slide = .75; tone(220, .2, 'triangle', .04, -120); }
 }
 let runDown = null;
 function runPointerDown(e) { runDown = { x: e.clientX, y: e.clientY }; }
@@ -814,6 +997,7 @@ function runPointerUp(e) {
   if (!runDown) return; const dx = e.clientX - runDown.x, dy = e.clientY - runDown.y; runDown = null;
   if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) runInput(dx < 0 ? 'left' : 'right');
   else if (dy < -35) runInput('jump');
+  else if (dy > 35) runInput('slide');
   else { const fx = e.clientX / innerWidth; runInput(fx < .33 ? 'left' : fx > .67 ? 'right' : 'jump'); }
 }
 function runKey(e) {
@@ -821,56 +1005,111 @@ function runKey(e) {
   if (['ArrowLeft', 'a', 'A'].includes(k)) { e.preventDefault(); runInput('left'); }
   if (['ArrowRight', 'd', 'D'].includes(k)) { e.preventDefault(); runInput('right'); }
   if (['ArrowUp', 'w', 'W', ' '].includes(k)) { e.preventDefault(); runInput('jump'); }
+  if (['ArrowDown', 's', 'S'].includes(k)) { e.preventDefault(); runInput('slide'); }
+}
+function poseExplorer(dt, moving) {
+  const u = explorer.userData, [aL, aR] = u.arms, [lL, lR] = u.legs, p = R.phase;
+  const air = R.y > .02, sliding = R.slide > 0 && !air;
+  let hipsY = .95, lean = .22, headY = 0;
+  if (R.intro > 0) {
+    // startled look back at the boulder
+    const k = clamp(1 - R.intro / 1.9, 0, 1);
+    u.head.rotation.y = Math.sin(Math.min(1, k * 2) * Math.PI / 2) * 2.2 * (1 - Math.max(0, (k - .75) * 4));
+    lean = -.1; aL.sh.rotation.x = -1.6; aR.sh.rotation.x = -1.4; aL.el.rotation.x = -1; aR.el.rotation.x = -.9;
+    lL.hp.rotation.x = 0; lR.hp.rotation.x = 0; lL.kn.rotation.x = 0; lR.kn.rotation.x = 0;
+  } else if (sliding) {
+    hipsY = .42; lean = -.75; u.head.rotation.y = 0;
+    lL.hp.rotation.x = -1.35; lR.hp.rotation.x = -1.15; lL.kn.rotation.x = .25; lR.kn.rotation.x = .5;
+    aL.sh.rotation.x = .6; aR.sh.rotation.x = .4; aL.el.rotation.x = -.3; aR.el.rotation.x = -.3;
+  } else if (air) {
+    lean = .35; u.head.rotation.y = 0;
+    lL.hp.rotation.x = -1.1; lR.hp.rotation.x = -.3; lL.kn.rotation.x = 1.3; lR.kn.rotation.x = 1.0;
+    aL.sh.rotation.x = -2.3; aR.sh.rotation.x = -1.2; aL.el.rotation.x = -.4; aR.el.rotation.x = -.8;
+  } else {
+    const s = Math.sin(p), c = Math.sin(p + Math.PI); u.head.rotation.y = 0;
+    lL.hp.rotation.x = -s * .85; lR.hp.rotation.x = -c * .85;
+    lL.kn.rotation.x = .25 + Math.max(0, Math.sin(p + .9)) * 1.3; lR.kn.rotation.x = .25 + Math.max(0, Math.sin(p + .9 + Math.PI)) * 1.3;
+    aL.sh.rotation.x = s * .9; aR.sh.rotation.x = c * .9; aL.el.rotation.x = -1.1; aR.el.rotation.x = -1.1;
+    hipsY = .95 + Math.abs(Math.cos(p)) * .07; headY = Math.abs(Math.cos(p)) * .02;
+    if (moving && Math.sign(Math.sin(p)) !== Math.sign(Math.sin(R.lastStep))) { const side = Math.sin(p) > 0 ? -1 : 1; puff(R.x + side * .13, .08, .25, .35, .5, (Math.random() - .5) * .4, .5, 2.5, .45); }
+    R.lastStep = p;
+  }
+  u.hips.position.y = lerp(u.hips.position.y, hipsY, Math.min(1, dt * 14)); u.torso.rotation.x = lerp(u.torso.rotation.x, lean, Math.min(1, dt * 10)); u.neck.position.y = .7 + headY;
 }
 function runUpdate(dt) {
   if (!R.on) return;
-  if (!R.ended) { R.t += dt; R.speed = 11 + R.t * .42; if (R.t >= R.dur) endRun(true); }
-  const d = R.ended ? 0 : R.speed * dt;
-  for (const g of segs) { g.position.z += d; if (g.position.z > SEG + 6) g.position.z -= NSEG * SEG; }
+  const inIntro = R.intro > 0;
+  if (inIntro) { R.intro -= dt; if (R.intro <= 0) R.intro = 0; }
+  if (!R.ended && !inIntro) { R.t += dt; R.speed = 11 + R.t * .42; if (R.t >= R.dur) endRun(true); }
+  const d = R.ended || inIntro ? 0 : R.speed * dt; R.dist += d;
+  for (const g of segs) { g.position.z += d; if (g.position.z > SEG + 6) { g.position.z -= NSEG * SEG; setVariant(g, Math.floor(Math.random() * 4)); } }
+  const lit = [];
+  for (const g of segs) { const v = g.userData.variants[0]; if (g.userData.cur === 0) { v.userData.flames.forEach((f, i) => f.scale.set(1, 1 + .1 * Math.sin(tAll * 7 + i * 2 + g.position.z), 1)); if (g.position.z < 9 && g.position.z > -45) lit.push(g); } }
+  lit.sort((a, b) => Math.abs(a.position.z + 6) - Math.abs(b.position.z + 6));
+  torchPool.forEach((L, i) => { const g = lit[i]; if (g) { L.position.set(0, 3.3, g.position.z - 1.6); L.intensity = 9 * (1 + .06 * Math.sin(tAll * 6.3 + i)); } else L.intensity = 0; });
   R.farZ += d; while (R.farZ > -57) { R.farZ -= 11; spawnRow(R.farZ); }
   // explorer
   R.x = lerp(R.x, LANES[R.lane], Math.min(1, dt * 14)); R.vy -= 27 * dt; R.y = Math.max(0, R.y + R.vy * dt); if (R.y === 0) R.vy = Math.max(0, R.vy);
-  R.inv = Math.max(0, R.inv - dt); if (!R.ended) R.phase += dt * R.speed * .9;
-  explorer.position.set(R.x, R.y, 0); explorer.rotation.z = (LANES[R.lane] - R.x) * -.15;
-  const { legs, arms, mats } = explorer.userData, sw = R.y > 0 ? .6 : Math.sin(R.phase) * .9;
-  legs[0].rotation.x = sw; legs[1].rotation.x = -sw; arms[0].rotation.x = -sw * .8; arms[1].rotation.x = sw * .8;
-  for (const m of mats) { m.transparent = R.inv > 0; m.opacity = R.inv > 0 ? .55 : 1; }
-  // obstacles and coins
-  const lanePos = Math.round((R.x + 1.7) / 1.7);
+  R.slide = Math.max(0, R.slide - dt); R.inv = Math.max(0, R.inv - dt);
+  if (!R.ended) R.phase += dt * (inIntro ? 0 : R.speed * .9);
+  explorer.position.set(R.x, R.y, 0); explorer.rotation.z = (LANES[R.lane] - R.x) * -.12;
+  poseExplorer(dt, !R.ended && !inIntro);
+  for (const m of explorer.userData.mats) { m.transparent = R.inv > 0; m.opacity = R.inv > 0 ? .55 : 1; }
+  if (R.slide > 0 && R.y < .02 && !R.ended && Math.random() < .5) puff(R.x + (Math.random() - .5) * .3, .1, .5, .45, .45, 0, .3, 3, .5);
+  // obstacles, coins, gems
+  const lanePos = Math.round((R.x + 1.7) / 1.7), sliding = R.slide > 0 && R.y < .3;
   for (const o of R.objs) {
-    o.mesh.position.z += d; if (o.kind === 'coin') o.mesh.rotation.z += dt * 4;
+    o.mesh.position.z += d;
+    if (o.kind === 'coin') o.mesh.rotation.z += dt * 4;
+    if (o.kind === 'gem') { o.mesh.rotation.y += dt * 2.5; o.mesh.position.y = .85 + Math.sin(tAll * 3 + o.mesh.position.z) * .08; }
     if (o.done || R.ended) continue;
     const z = o.mesh.position.z;
-    if (o.kind === 'coin') {
+    if (o.kind === 'coin' || o.kind === 'gem') {
       if (Math.abs(z) < .7 && o.lane === lanePos && R.y < 1.6) {
-        o.done = true; o.mesh.visible = false; R.combo++; R.bestCombo = Math.max(R.bestCombo, R.combo); R.coins++; G.coinsTotal++;
-        R.pts += Math.min(R.combo, 10); SFX.coin(R.combo);
-        if (R.coins % 12 === 0 && G.wedges < 3) { G.wedges++; toast('🪵 +1 wedge!'); }
+        o.done = true; o.mesh.visible = false; R.combo++; R.bestCombo = Math.max(R.bestCombo, R.combo);
+        const worth = o.kind === 'gem' ? 5 : 1, before = R.coins; R.coins += worth; G.coinsTotal += worth;
+        R.pts += Math.min(R.combo, 10) * worth; SFX.coin(R.combo); if (o.kind === 'gem') { tone(1320, .2, 'sine', .05); tone(1760, .25, 'sine', .04, 0, .08); toast('💎 Gem! +5 coins'); }
+        for (let k = 0; k < (o.kind === 'gem' ? 6 : 2); k++) puff(o.mesh.position.x, o.mesh.position.y, z, .25, .4, (Math.random() - .5) * 2, Math.random() * 2, 0, .8, o.kind === 'gem' ? 0xbff7ff : 0xffe08a);
+        while (Math.floor(R.coins / 12) > Math.floor(before / 12) && G.wedges < 3) { G.wedges++; toast('🪵 +1 wedge!'); break; }
         $('#rC').textContent = R.coins; $('#rK').textContent = '×' + Math.min(R.combo, 10); $('#rW').textContent = G.wedges;
       } else if (z > 1) o.done = true;
       continue;
     }
     if (z > -.55 && z < .55 && o.lane === lanePos) {
-      const clear = (o.kind === 'log' && R.y > .62) || (o.kind === 'pit' && R.y > .15);
+      const clear = (o.kind === 'column' && R.y > .7) || (o.kind === 'pit' && R.y > .15) || (o.kind === 'beam' && sliding);
       if (!clear && R.inv <= 0) { o.done = true; stumble(o); }
     } else if (z >= .55) o.done = true;
   }
   R.objs = R.objs.filter(o => { if (o.mesh.position.z > 14) { run.remove(o.mesh); return false; } return true; });
-  // the boulder
-  if (!R.ended) R.boulderGoal = Math.min(11, R.boulderGoal + dt * .22);
-  R.boulderZ = lerp(R.boulderZ, R.boulderGoal, Math.min(1, dt * 3)); boulder.position.z = R.boulderZ; boulder.rotation.x -= d / 2.3;
-  boulder.position.x = lerp(boulder.position.x, R.x * .5, Math.min(1, dt * 2));
+  // the boulder: rolls, kicks up dust, shakes the ceiling
+  if (!R.ended && !inIntro) R.boulderGoal = Math.min(11, R.boulderGoal + dt * .22);
+  R.boulderZ = lerp(R.boulderZ, R.boulderGoal, Math.min(1, dt * (inIntro ? 1.6 : 3))); boulder.position.z = R.boulderZ;
+  boulder.rotation.x -= (inIntro ? 6 : R.ended ? 0 : R.speed) * dt / 2.3; boulder.position.x = lerp(boulder.position.x, R.x * .5, Math.min(1, dt * 2));
+  if (!R.ended && Math.random() < dt * 14) puff(boulder.position.x + (Math.random() - .5) * 4, .3, R.boulderZ - 1.6 + Math.random(), 1 + Math.random(), .9, (Math.random() - .5) * 1.5, .8, 1, .4, 0xd9b98c);
+  const near = clamp((11 - R.boulderZ) / 8.5, 0, 1);
+  R.pebbleT -= dt; if (!R.ended && R.pebbleT <= 0) { R.pebbleT = .9 - near * .6; const pb = pebbles.find(p => !p.on); if (pb) { pb.on = true; pb.m.visible = true; pb.m.position.set((Math.random() - .5) * 5, 5, -4 - Math.random() * 12); pb.vy = 0; } }
+  for (const pb of pebbles) { if (!pb.on) continue; pb.vy -= 20 * dt; pb.m.position.y += pb.vy * dt; pb.m.position.z += d; pb.m.rotation.x += dt * 5;
+    if (pb.m.position.y < .08) { pb.on = false; pb.m.visible = false; puff(pb.m.position.x, .1, pb.m.position.z, .5, .6, 0, .4, 0, .5); } }
+  for (const p of puffs) { if (p.life <= 0) continue; p.life -= dt; const k = 1 - p.life / p.max; p.s.position.x += p.vx * dt; p.s.position.y += p.vy * dt; p.s.position.z += p.vz * dt + d;
+    p.s.scale.setScalar(p.grow * (.6 + k * .8)); p.s.material.opacity = p.op * (1 - k); if (p.life <= 0) p.s.visible = false; }
   // camera
-  const sh = shakeT > 0 ? shakeAmp * (shakeT / .35) : 0;
-  runCam.position.set(R.x * .55 + (Math.random() - .5) * sh, 3.6 + (Math.random() - .5) * sh, 6.2); runCam.lookAt(R.x * .4, 1.1, -6);
-  runTorch.position.set(R.x, 3.6, 2.5);
-  const tl = $('#rT'); if (tl && !R.ended) tl.textContent = Math.max(0, Math.ceil(R.dur - R.t));
+  const sh = (shakeT > 0 ? shakeAmp * (shakeT / .35) : 0) + (reduceMotion ? 0 : near * .07), bob = R.y > 0 ? 0 : Math.abs(Math.cos(R.phase)) * .05;
+  if (inIntro) {
+    const k = clamp(1 - R.intro / 1.9, 0, 1), sw = k < .7 ? 0 : easeIO((k - .7) / .3);
+    runCam.position.set(lerp(2.4, R.x * .55, sw) + (Math.random() - .5) * .05, lerp(1.9, 3.6, sw), lerp(-3.6, 6.2, sw));
+    const lx = lerp(0, R.x * .4, sw), ly = lerp(1.3, 1.1, sw), lz = lerp(4, -6, sw); runCam.lookAt(lx, ly, lz);
+  } else {
+    runCam.position.set(R.x * .55 + (Math.random() - .5) * sh, 3.6 + bob + (Math.random() - .5) * sh - (R.slide > 0 ? .4 : 0), 6.2); runCam.lookAt(R.x * .4, 1.1, -6);
+  }
+  runTorch.position.set(R.x, 3.4, 2.2); runSun.position.set(R.x - 3, 10, 5); runSun.target.position.set(R.x, 0, -2);
+  const tl = $('#rT'); if (tl && !R.ended) { tl.textContent = Math.max(0, Math.ceil(R.dur - R.t)); $('#rD').textContent = Math.round(R.dist); }
 }
 function stumble(o) {
   R.hits++; R.combo = 0; R.inv = 1.3; R.boulderGoal = Math.max(2.6, R.boulderGoal - 2.6); SFX.bad(); SFX.rumble(); shake(.4);
   if (o.kind !== 'pit') o.mesh.visible = false;
+  for (let k = 0; k < 8; k++) puff(o.mesh.position.x + (Math.random() - .5), .5 + Math.random(), .3, .6, .7, (Math.random() - .5) * 3, Math.random() * 2, 1, .55);
   $('#rK').textContent = '×1'; $('#rH').textContent = '●'.repeat(R.hits) + '○'.repeat(Math.max(0, 3 - R.hits));
-  toast(o.kind === 'stone' ? 'Ouch! Ran into a stone.' : o.kind === 'log' ? 'Tripped over a log! Jump it next time.' : 'Fell into a pit! Jump it next time.', true);
+  toast({ stone: 'Ouch! Ran into a carved block.', column: 'Tripped on a fallen column! Jump it.', pit: 'Fell into a pit! Jump it.', beam: 'Bonk! Slide under low beams (↓).' }[o.kind], true);
   if (R.hits >= 3) { R.boulderGoal = 1.4; endRun(false); }
 }
 function endRun(escaped) {
@@ -879,8 +1118,8 @@ function endRun(escaped) {
   setTimeout(() => {
     R.on = false; activeScene = 'temple';
     setScreen('runDone', '<div class="center"><div class="panel pe" style="text-align:center"><div class="kicker">Boulder run</div><h2 style="font-size:32px;margin:6px 0 12px;color:var(--gold)">' + (escaped ? '🏃 You escaped!' : '🪨 Flattened… but you crawl out.') + '</h2>' +
-      '<div class="grid3"><div><div class="stat">' + R.coins + '<small>coins</small></div></div><div><div class="stat">×' + Math.min(R.bestCombo, 10) + '<small>best combo</small></div></div><div><div class="stat">+' + R.pts + '<small>points' + (escaped ? ' (incl. +100 escape)' : '') + '</small></div></div></div>' +
-      '<p class="sub" style="margin-top:12px">' + (G.wedges > R.wedgesStart ? '🪵 You earned ' + (G.wedges - R.wedgesStart) + ' wedge' + (G.wedges - R.wedgesStart > 1 ? 's' : '') + '. ' : '') + 'Wedges: ' + G.wedges + '/3.</p>' +
+      '<div class="grid3"><div><div class="stat">' + R.coins + '<small>coins' + (R.gems ? '' : '') + '</small></div></div><div><div class="stat">' + Math.round(R.dist) + ' m<small>distance</small></div></div><div><div class="stat">+' + R.pts + '<small>points' + (escaped ? ' (incl. +100 escape)' : '') + '</small></div></div></div>' +
+      '<p class="sub" style="margin-top:12px">Best combo ×' + Math.min(R.bestCombo, 10) + '. ' + (G.wedges > R.wedgesStart ? '🪵 You earned ' + (G.wedges - R.wedgesStart) + ' wedge' + (G.wedges - R.wedgesStart > 1 ? 's' : '') + '. ' : '') + 'Wedges: ' + G.wedges + '/3.</p>' +
       '<div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="go" type="button">Into the next chamber ➜</button></div></div></div>');
     $('#go').onclick = () => { G.chamber++; chamberIntro(); };
   }, escaped ? 900 : 1500);
